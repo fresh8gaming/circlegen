@@ -124,7 +124,7 @@ jobs:
           source-tag: <<parameters.tag>>
           target-tag: latest
       - run: mkdir /tmp/workspace
-      - run: echo "-p <<parameters.image>>.tag=$CIRCLE_SHA1" > /tmp/workspace/<<parameters.image>>
+      - run: echo "-p <<parameters.image>>.docker.tag=$CIRCLE_SHA1" > /tmp/workspace/<<parameters.image>>
       - run: cat /tmp/workspace/<<parameters.image>>
       - persist_to_workspace:
           root: /tmp/workspace
