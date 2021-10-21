@@ -1,5 +1,3 @@
 FROM cimg/go:1.17
 
-RUN echo 1
-RUN pwd
-RUN ls -la
+COPY circleci-config-generator /usr/local/go/bin/circleci-config-generator
