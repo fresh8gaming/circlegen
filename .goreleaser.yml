@@ -5,4 +5,4 @@ changelog:
   use: github
 
 archives:
-  format: binary
+  - format: binary
