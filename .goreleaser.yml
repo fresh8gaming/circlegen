@@ -5,8 +5,8 @@ dockers:
   - image_templates:
       - europe-docker.pkg.dev/intrepid-honor-109516/main/circleci-config-generator
 
-# changelog:
-#   use: github
+changelog:
+  use: github
 
 announce:
   # Skip prerelease
