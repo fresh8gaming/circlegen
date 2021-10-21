@@ -1,6 +1,9 @@
 # .circleci/config.yml
 version: 2.1
 
+orbs:
+  gcp-gcr: fresh8gaming/google-artifact-orb@1.0.1
+
 workflows:
   main:
     jobs:
