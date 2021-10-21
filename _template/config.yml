@@ -130,6 +130,7 @@ workflows:
       - build-and-push-image:
           name: build-and-push-{{ .Name }}
           image: {{ $.Name }}-{{ .Name }}
+          tag: ${CIRCLE_SHA1}
           extra_build_args: "--build-arg APP={{ .Name }}"
           context:
             - artifact-registry
