@@ -60,12 +60,6 @@ jobs:
       - image: cimg/go:1.17
     steps:
       - checkout
-      - setup_remote_docker
-      - gcp-gcr/gcr-auth:
-          gcloud-service-key: GCLOUD_SERVICE_KEY
-          google-compute-zone: GOOGLE_COMPUTE_ZONE
-          google-project-id: GOOGLE_PROJECT_ID
-          registry-url: europe-docker.pkg.dev
       - run: curl -sL https://git.io/goreleaser | bash
 
   install-tools:
