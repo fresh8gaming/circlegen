@@ -23,16 +23,6 @@ jobs:
   build-and-push-image:
     executor: gcp-default
     parameters:
-      docker-context:
-        default: .
-        description: >
-          Path to the directory containing your build context, defaults to .
-          (working directory)
-        type: string
-      dockerfile:
-        default: Dockerfile
-        description: "Name of dockerfile to use, defaults to Dockerfile"
-        type: string
       extra_build_args:
         default: ""
         description: >
@@ -63,15 +53,15 @@ jobs:
     steps:
       - checkout
       - gcp-gcr/gcr-auth:
-          gcloud-service-key: <<parameters.GCLOUD_SERVICE_KEY>>
-          google-compute-zone: <<parameters.GOOGLE_COMPUTE_ZONE>>
-          google-project-id: <<parameters.GOOGLE_PROJECT_ID>>
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+          google-compute-zone: GOOGLE_COMPUTE_ZONE
+          google-project-id: GOOGLE_PROJECT_ID
           registry-url: <<parameters.registry-url>>
       - gcp-gcr/build-image:
-          docker-context: <<parameters.docker-context>>
-          dockerfile: <<parameters.dockerfile>>
+          docker-context: .
+          dockerfile: build/Dockerfile
+          google-project-id: GOOGLE_PROJECT_ID
           extra_build_args: <<parameters.extra_build_args>>
-          google-project-id: <<parameters.GOOGLE_PROJECT_ID>>
           image: <<parameters.image>>
           path: <<parameters.path>>
           registry-url: <<parameters.registry-url>>
@@ -79,13 +69,13 @@ jobs:
           tag: <<parameters.tag>>
           workspace-root: .
       - gcp-gcr/push-image:
-          google-project-id: <<parameters.GOOGLE_PROJECT_ID>>
+          google-project-id: GOOGLE_PROJECT_ID
           image: <<parameters.image>>
           registry-url: <<parameters.registry-url>>
           registry-name: <<parameters.registry-name>>
           tag: ${CIRCLE_SHA1}
       - gcp-gcr/tag-image:
-          google-project-id: <<parameters.GOOGLE_PROJECT_ID>>
+          google-project-id: GOOGLE_PROJECT_ID
           image: <<parameters.image>>
           registry-url: <<parameters.registry-url>>
           registry-name: <<parameters.registry-name>>
@@ -101,7 +91,7 @@ jobs:
 
   concat-versions:
     docker:
-      - image: cimg/base:2020.01
+      - image: cimg/base:2021.10
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -114,7 +104,7 @@ jobs:
 
   update-argo:
     docker:
-      - image: cimg/base:2020.01
+      - image: cimg/base:2021.10
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -141,7 +131,6 @@ workflows:
           name: build-and-push-{{ .Name }}
           image: {{ $.Name }}-{{ .Name }}
           extra_build_args: "--build-arg APP={{ .Name }}"
-          dockerfile: build/Dockerfile
           context:
             - artifact-registry
           requires:
