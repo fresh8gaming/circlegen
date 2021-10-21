@@ -1,6 +1,10 @@
 release:
   prerelease: auto
 
+dockers:
+  - image_templates:
+      - europe-docker.pkg.dev/intrepid-honor-109516/main/circleci-config-generator
+
 changelog:
   use: github
 
@@ -14,6 +18,6 @@ announce:
     enabled: true
 
     # The name of the channel that the user selected as a destination for webhook messages.
-    channel: '#dep-engineering'
+    channel: "#dep-engineering"
 
     message_template: "{{ .ProjectName }} {{ .Tag }} is now available! <http://github.com/fresh8gaming/{{ .ProjectName }}/releases/tag/{{ .Tag }}|*Check it out!*>"
