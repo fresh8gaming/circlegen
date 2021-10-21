@@ -29,10 +29,10 @@ curl -LO https://github.com/fresh8gaming/circleci-config-generator/releases/down
 
 case $family in
   'linux')
-    mv ./${filename} ~/.local/bin
+    mv ./${filename} ~/.local/bin/circleci-config-generator
     ;;
   'mac')
-    sudo mv ./${filename} /usr/local/bin
+    sudo mv ./${filename} /usr/local/bin/circleci-config-generator
     ;;
   *)
   echo "Sorry, you'll need to move the circleci-config-generator binary manually."
