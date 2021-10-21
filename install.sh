@@ -29,6 +29,7 @@ curl -LO https://github.com/fresh8gaming/circleci-config-generator/releases/down
 
 case $family in
   'linux')
+    mkdir -p ~/.local/bin/
     mv ./${filename} ~/.local/bin/circleci-config-generator
     chmod +x ~/.local/bin/circleci-config-generator
     ;;
