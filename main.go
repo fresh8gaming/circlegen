@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"text/template"
 
 	"gopkg.in/yaml.v2"
@@ -26,6 +27,10 @@ type MetadataService struct {
 	Name      string `yaml:"name"`
 	Type      string `yaml:"type"`
 	CIEnabled bool   `yaml:"ciEnabled"`
+}
+
+func (ms MetadataService) NameUnderscored() string {
+	return strings.ReplaceAll(ms.Name, "-", "_")
 }
 
 func main() {

@@ -46,6 +46,9 @@ jobs:
         default: main
         description: The GAR name
         type: string
+      service_name:
+        description: Name of the service
+        type: string
       tag:
         default: latest
         description: A Docker image tag
@@ -82,7 +85,7 @@ jobs:
           source-tag: <<parameters.tag>>
           target-tag: latest
       - run: mkdir /tmp/workspace
-      - run: echo "-p <<parameters.image>>.docker.tag=$CIRCLE_SHA1" > /tmp/workspace/<<parameters.image>>
+      - run: echo "-p <<parameters.service_name>>.docker.tag=$CIRCLE_SHA1" > /tmp/workspace/<<parameters.image>>
       - run: cat /tmp/workspace/<<parameters.image>>
       - persist_to_workspace:
           root: /tmp/workspace
@@ -130,6 +133,7 @@ workflows:
       - build-and-push-image:
           name: build-and-push-{{ .Name }}
           image: {{ $.Name }}-{{ .Name }}
+          service_name: {{ .NameUnderscored }}
           tag: ${CIRCLE_SHA1}
           extra_build_args: "--build-arg APP={{ .Name }}"
           context:
