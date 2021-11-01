@@ -29,6 +29,16 @@ type MetadataService struct {
 	CIEnabled bool   `yaml:"ciEnabled"`
 }
 
+func (m Metadata) HasGRPC() bool {
+	for _, service := range m.Services {
+		if service.Type == "http-grpc" {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (ms MetadataService) NameUnderscored() string {
 	return strings.ReplaceAll(ms.Name, "-", "_")
 }

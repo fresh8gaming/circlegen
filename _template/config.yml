@@ -20,6 +20,14 @@ jobs:
       - run: make test
       - run: make lint
 
+  buf-lint:
+    docker:
+      - image: cimg/go:1.17
+    steps:
+      - checkout
+      - run: make install-tools
+      - run: make buf-lint
+
   build-and-push-image:
     executor: gcp-default
     parameters:
@@ -126,6 +134,9 @@ workflows:
   main:
     jobs:
       - test-and-lint
+{{if $.HasGRPC}}
+      - buf-lint
+{{- end}}
       - docker/hadolint:
           dockerfiles: "build/Dockerfile"
 {{range .Services -}}
@@ -141,6 +152,9 @@ workflows:
           requires:
             - test-and-lint
             - docker/hadolint
+{{if eq .Type "http-grpc"}}
+            - buf-lint
+{{- end}}
 {{end}}
 {{- end}}
       - concat-versions:
