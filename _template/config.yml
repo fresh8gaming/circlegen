@@ -164,11 +164,18 @@ workflows:
             - build-and-push-{{ .Name }}
 {{end}}
 {{- end}}
+      - approve:
+          type: approval
+          filters:
+            branches:
+              only:
+                - trunk
       - update-argo:
           context:
             - argo
           requires:
             - concat-versions
+            - approve
           filters:
             branches:
               only:
