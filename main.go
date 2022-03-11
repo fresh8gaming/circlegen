@@ -17,10 +17,11 @@ import (
 var configTemplate embed.FS
 
 type Metadata struct {
-	Name     string            `yaml:"name"`
-	Team     string            `yaml:"team"`
-	Domain   string            `yaml:"domain"`
-	Services []MetadataService `yaml:"services"`
+	Name               string            `yaml:"name"`
+	Team               string            `yaml:"team"`
+	Domain             string            `yaml:"domain"`
+	WhitesourceEnabled bool              `yaml:"whitesourceEnabled"`
+	Services           []MetadataService `yaml:"services"`
 }
 
 type MetadataService struct {
