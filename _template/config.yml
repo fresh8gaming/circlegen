@@ -134,13 +134,6 @@ workflows:
   version: 2
 {{- if .WhitesourceEnabled}}
   whitesource:
-    triggers:
-      - schedule:
-          cron: "59 23 * * 6"
-          filters:
-            branches:
-              only:
-                - trunk
     jobs:
       - whitesource-scan/scan:
           config_file_path: .circleci/.whitesource
