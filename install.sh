@@ -17,7 +17,7 @@ case $(uname -sm) in
   exit 1
     ;;
 esac
-
+export TAG=v0.2.0-rc0
 if [[ -z "${TAG}" ]]; then
   tag=$(basename $(curl -fs -o/dev/null -w %{redirect_url} https://github.com/fresh8gaming/circleci-config-generator/releases/latest))
 else
