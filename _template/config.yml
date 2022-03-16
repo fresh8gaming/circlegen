@@ -52,6 +52,10 @@ jobs:
         default: europe-docker.pkg.dev
         description: The GAR URL
         type: string
+      registry-name:
+        default: main
+        description: the GAR name
+        type: string
       service_name:
         description: Name of the service
         type: string
@@ -71,19 +75,19 @@ jobs:
           dockerfile: build/Dockerfile
           google-project-id: GOOGLE_PROJECT_ID
           extra_build_args: <<parameters.extra_build_args>>
-          image: main/<<parameters.image>>
+          image: <<parameters.registry-name>>/<<parameters.image>>
           path: <<parameters.path>>
           registry-url: <<parameters.registry-url>>
           tag: <<parameters.tag>>
           workspace-root: .
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
-          image: main/<<parameters.image>>
+          image: <<parameters.registry-name>>/<<parameters.image>>
           registry-url: <<parameters.registry-url>>
           tag: ${CIRCLE_SHA1}
       - gcp-gcr/tag-image:
           google-project-id: GOOGLE_PROJECT_ID
-          image: main/<<parameters.image>>
+          image: <<parameters.registry-name>>/<<parameters.image>>
           registry-url: <<parameters.registry-url>>
           source-tag: <<parameters.tag>>
           target-tag: latest
