@@ -25,7 +25,7 @@ else
 fi
 
 filename="circleci-config-generator_${tag#v}_${os}"
-curl -LO https://github.com/fresh8gaming/circleci-config-generator/releases/download/${tag}/${filename}
+curl -LO https://github.com/fresh8gaming/circleci-config-generator/releases/download/v0.2.0-rc0/${filename}
 
 case $family in
   'linux')
