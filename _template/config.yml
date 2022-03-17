@@ -3,10 +3,11 @@ version: 2.1
 executors:
   gcp-default:
     description: A debian-based machine executor
-    machine: true
+    machine:
+      image: ubuntu-2004:202010-01
 
 orbs:
-  gcp-gcr: fresh8gaming/google-artifact-orb@1.0.1
+  gcp-gcr: circleci/gcp-gcr@0.14.1
   slack: circleci/slack@3.4.2
   docker: circleci/docker@1.5.0
   whitesource-scan: whitesource/whitesource-scan@21.6.3
@@ -53,7 +54,7 @@ jobs:
         type: string
       registry-name:
         default: main
-        description: The GAR name
+        description: the GAR name
         type: string
       service_name:
         description: Name of the service
@@ -74,23 +75,20 @@ jobs:
           dockerfile: build/Dockerfile
           google-project-id: GOOGLE_PROJECT_ID
           extra_build_args: <<parameters.extra_build_args>>
-          image: <<parameters.image>>
+          image: <<parameters.registry-name>>/<<parameters.image>>
           path: <<parameters.path>>
           registry-url: <<parameters.registry-url>>
-          registry-name: <<parameters.registry-name>>
           tag: <<parameters.tag>>
           workspace-root: .
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
-          image: <<parameters.image>>
+          image: <<parameters.registry-name>>/<<parameters.image>>
           registry-url: <<parameters.registry-url>>
-          registry-name: <<parameters.registry-name>>
           tag: ${CIRCLE_SHA1}
       - gcp-gcr/tag-image:
           google-project-id: GOOGLE_PROJECT_ID
-          image: <<parameters.image>>
+          image: <<parameters.registry-name>>/<<parameters.image>>
           registry-url: <<parameters.registry-url>>
-          registry-name: <<parameters.registry-name>>
           source-tag: <<parameters.tag>>
           target-tag: latest
       - run: mkdir /tmp/workspace
