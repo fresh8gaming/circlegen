@@ -18,6 +18,7 @@ var configTemplate embed.FS
 
 type Metadata struct {
 	Name               string            `yaml:"name"`
+	StagingName        string            `yaml:"stagingName"`
 	Team               string            `yaml:"team"`
 	Domain             string            `yaml:"domain"`
 	WhitesourceEnabled bool              `yaml:"whitesourceEnabled"`

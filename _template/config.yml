@@ -113,6 +113,9 @@ jobs:
             - merged-versions
 
   update-argo:
+    parameters:
+      argo-cd-project:
+        type: string
     docker:
       - image: cimg/base:2021.10
     steps:
@@ -123,10 +126,10 @@ jobs:
           command: "curl -sSL -o ./argocd https://${ARGOCD_SERVER}/download/argocd-linux-amd64 && chmod +x ./argocd"
       - run:
           name: "Set Image Tag"
-          command: "./argocd app set {{ $.Name }} $(cat /tmp/workspace/merged-versions) --grpc-web --auth-token=$ARGO_AUTH_TOKEN"
+          command: "./argocd app set <<parameters.argo-cd-project>> $(cat /tmp/workspace/merged-versions) --grpc-web --auth-token=$ARGO_AUTH_TOKEN"
       - run:
           name: "Sync"
-          command: "./argocd app sync {{ $.Name }} --grpc-web --auth-token=$ARGO_AUTH_TOKEN"
+          command: "./argocd app sync <<parameters.argo-cd-project>> --grpc-web --auth-token=$ARGO_AUTH_TOKEN"
 
 workflows:
   version: 2
@@ -174,6 +177,22 @@ workflows:
             - build-and-push-{{ .Name }}
 {{end}}
 {{- end}}
+{{- if .StagingName }}
+      - approve-staging:
+          type: approval
+          filters:
+            branches:
+              only:
+                - trunk
+      - update-argo:
+          name: update-staging-argo
+          argo-cd-project: {{.StagingName }}
+          context:
+            - argo
+          requires:
+            - concat-versions
+            - approve-staging
+{{- end }}
       - approve:
           type: approval
           filters:
@@ -181,11 +200,15 @@ workflows:
               only:
                 - trunk
       - update-argo:
+          argo-cd-project: {{ .Name }}
           context:
             - argo
           requires:
             - concat-versions
             - approve
+  {{- if .StagingName }}
+            - update-staging-argo
+  {{- end }}
           filters:
             branches:
               only:
