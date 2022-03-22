@@ -177,7 +177,7 @@ workflows:
             - build-and-push-{{ .Name }}
 {{end}}
 {{- end}}
-{{- if .StagingName }}
+{{- if .Staging }}
       - approve-staging:
           type: approval
           filters:
@@ -186,7 +186,7 @@ workflows:
                 - trunk
       - update-argo:
           name: update-staging-argo
-          argo-cd-project: {{.StagingName }}
+          argo-cd-project: {{.Name }}-staging
           context:
             - argo
           requires:
@@ -206,7 +206,7 @@ workflows:
           requires:
             - concat-versions
             - approve
-  {{- if .StagingName }}
+  {{- if .Staging }}
             - update-staging-argo
   {{- end }}
           filters:
