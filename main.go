@@ -17,12 +17,14 @@ import (
 var configTemplate embed.FS
 
 type Metadata struct {
-	Name               string            `yaml:"name"`
-	Staging            bool              `yaml:"staging"`
-	Team               string            `yaml:"team"`
-	Domain             string            `yaml:"domain"`
-	WhitesourceEnabled bool              `yaml:"whitesourceEnabled"`
-	Services           []MetadataService `yaml:"services"`
+	Name                   string            `yaml:"name"`
+	Staging                bool              `yaml:"staging"`
+	Team                   string            `yaml:"team"`
+	Domain                 string            `yaml:"domain"`
+	WhitesourceEnabled     bool              `yaml:"whitesourceEnabled"`
+	Services               []MetadataService `yaml:"services"`
+	ArgoAppNamesProduction string            `yaml:"argoAppNamesProduction"`
+	ArgoAppNamesStaging    string            `yaml:"argoAppNamesStaging"`
 }
 
 type MetadataService struct {

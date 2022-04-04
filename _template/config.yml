@@ -187,7 +187,7 @@ workflows:
                 - trunk
       - update-argo:
           name: update-staging-argo
-          argo-cd-project: {{.Name }}-staging
+          argo-cd-project: {{if .ArgoAppNamesStaging }}{{ .ArgoAppNamesStaging }}{{else}}{{.Name}}-staging{{end}}
           context:
             - argo
           requires:
@@ -201,7 +201,7 @@ workflows:
               only:
                 - trunk
       - update-argo:
-          argo-cd-project: {{ .Name }}
+          argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
           context:
             - argo
           requires:
