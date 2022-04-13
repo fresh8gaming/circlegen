@@ -182,12 +182,14 @@ workflows:
 {{end}}
 {{- end}}
 {{- if .Staging }}
+  {{ if not .CDEnabled }}
       - approve-staging:
           type: approval
           filters:
             branches:
               only:
                 - trunk
+  {{ end }}
       - update-argo:
           name: update-staging-argo
           argo-cd-project: {{if .ArgoAppNamesStaging }}{{ .ArgoAppNamesStaging }}{{else}}{{.Name}}-staging{{end}}
@@ -195,21 +197,27 @@ workflows:
             - argo
           requires:
             - concat-versions
+  {{ if not .CDEnabled }}
             - approve-staging
+  {{ end }}
 {{- end }}
+{{ if not .CDEnabled }}
       - approve:
           type: approval
           filters:
             branches:
               only:
                 - trunk
+{{ end }}
       - update-argo:
           argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
           context:
             - argo
           requires:
             - concat-versions
+{{ if not .CDEnabled }}
             - approve
+{{ end }}
   {{- if .Staging }}
             - update-staging-argo
   {{- end }}
