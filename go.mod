@@ -1,4 +1,4 @@
-module github.com/fresh8gaming/circleci-config-generator
+module github.com/fresh8gaming/circlegen
 
 go 1.17
 

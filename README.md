@@ -1,1 +1,1 @@
-# circleci-config-generator
+# circlegen

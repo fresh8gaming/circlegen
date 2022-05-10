@@ -13,32 +13,32 @@ case $(uname -sm) in
     family='mac'
     ;;
   *)
-  echo "Sorry, you'll need to install the circleci-config-generator manually."
+  echo "Sorry, you'll need to install the circlegen manually."
   exit 1
     ;;
 esac
 
 if [[ -z "${TAG}" ]]; then
-  tag=$(basename $(curl -fs -o/dev/null -w %{redirect_url} https://github.com/fresh8gaming/circleci-config-generator/releases/latest))
+  tag=$(basename $(curl -fs -o/dev/null -w %{redirect_url} https://github.com/fresh8gaming/circlegen/releases/latest))
 else
   tag=${TAG}
 fi
 
-filename="circleci-config-generator_${tag#v}_${os}"
-curl -LO https://github.com/fresh8gaming/circleci-config-generator/releases/download/${tag}/${filename}
+filename="circlegen_${tag#v}_${os}"
+curl -LO https://github.com/fresh8gaming/circlegen/releases/download/${tag}/${filename}
 
 case $family in
   'linux')
     mkdir -p ~/.local/bin/
-    mv ./${filename} ~/.local/bin/circleci-config-generator
-    chmod +x ~/.local/bin/circleci-config-generator
+    mv ./${filename} ~/.local/bin/circlegen
+    chmod +x ~/.local/bin/circlegen
     ;;
   'mac')
-    sudo mv ./${filename} /usr/local/bin/circleci-config-generator
-    chmod +x /usr/local/bin/circleci-config-generator
+    sudo mv ./${filename} /usr/local/bin/circlegen
+    chmod +x /usr/local/bin/circlegen
     ;;
   *)
-  echo "Sorry, you'll need to move the circleci-config-generator binary manually."
+  echo "Sorry, you'll need to move the circlegen binary manually."
   exit 1
     ;;
 esac
