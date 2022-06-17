@@ -228,7 +228,7 @@ workflows:
           hadolint-tag: 2.9.3-debian
       - trigger-builds:
           requires:
-            # - test-and-lint
+            - test-and-lint
 {{if $.HasGRPC}}
             - buf-lint
 {{- end}}
@@ -240,11 +240,11 @@ workflows:
           filters:
             branches:
               only:
-                - dynamic-ci-builds
+                - trunk
       - trigger-all-builds:
           requires:
             - approve-all-build-workflow
-            # - test-and-lint
+            - test-and-lint
 {{if $.HasGRPC}}
             - buf-lint
 {{- end}}
@@ -252,7 +252,7 @@ workflows:
           filters:
             branches:
               only:
-                - dynamic-ci-builds
+                - trunk
           context:
             - fresh8bot
 
@@ -292,7 +292,7 @@ workflows:
           filters:
             branches:
               only:
-                - dynamic-ci-builds
+                - trunk
   {{ end }}
       - update-argo:
           name: update-staging-argo
@@ -311,7 +311,7 @@ workflows:
           filters:
             branches:
               only:
-                - dynamic-ci-builds
+                - trunk
 {{ end }}
       - update-argo:
           argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
@@ -328,7 +328,7 @@ workflows:
           filters:
             branches:
               only:
-                - dynamic-ci-builds
+                - trunk
 
   all-builds:
     when: << pipeline.parameters.build_all >>
@@ -358,7 +358,7 @@ workflows:
           filters:
             branches:
               only:
-                - dynamic-ci-builds
+                - trunk
       - update-argo:
           argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
           context:
