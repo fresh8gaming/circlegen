@@ -1,2 +1,5 @@
 dist
 .idea
+
+.metadata.yml
+.circleci/generated-config.yml
