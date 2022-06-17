@@ -162,7 +162,16 @@ jobs:
           at: /tmp/workspace
       - run:
           name: "Fetch argocd cli"
-          command: "Echo nah ah ah."
+          command: "curl -sSL -o ./argocd https://${ARGOCD_SERVER}/download/argocd-linux-amd64 && chmod +x ./argocd"
+      - run:
+          name: "Set Image Tag"
+          command: |
+            for project in <<parameters.argo-cd-project>>; do
+              ./argocd app set $project $(cat /tmp/workspace/merged-versions) --grpc-web --auth-token=$ARGO_AUTH_TOKEN
+            done
+      - run:
+          name: "Sync"
+          command: "./argocd app sync <<parameters.argo-cd-project>> --grpc-web --auth-token=$ARGO_AUTH_TOKEN"
 
   trigger-builds:
     docker:
