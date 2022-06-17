@@ -6,13 +6,42 @@ executors:
     machine:
       image: ubuntu-2004:202010-01
 
+references:
+  workspace_root: &workspace_root /tmp/workspace
+
+  attach_workspace: &attach_workspace
+    attach_workspace:
+      at: *workspace_root
+
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.14.1
   slack: circleci/slack@3.4.2
   docker: circleci/docker@2.0.3
   whitesource-scan: whitesource/whitesource-scan@21.6.3
+  compare-url: iynere/compare-url@1.2.0
+
+parameters:
+  run_main:
+    type: integer
+    default: 1
+  build_all:
+    type: integer
+    default: 0
+{{range .Services -}}
+{{if .CIEnabled}}
+  build_{{ .Name }}:
+    type: integer
+    default: 0
+{{end}}
+{{- end}}
 
 jobs:
+  nothing:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run: echo All Workflows Filtered
+
   test-and-lint:
     docker:
       - image: cimg/go:1.17
@@ -63,41 +92,51 @@ jobs:
         default: latest
         description: A Docker image tag
         type: string
+      should-run:
+        type: integer
+        default: 0
     steps:
-      - checkout
-      - gcp-gcr/gcr-auth:
-          gcloud-service-key: GCLOUD_SERVICE_KEY
-          google-compute-zone: GOOGLE_COMPUTE_ZONE
-          google-project-id: GOOGLE_PROJECT_ID
-          registry-url: <<parameters.registry-url>>
-      - gcp-gcr/build-image:
-          docker-context: .
-          dockerfile: build/Dockerfile
-          google-project-id: GOOGLE_PROJECT_ID
-          extra_build_args: <<parameters.extra_build_args>>
-          image: <<parameters.registry-name>>/<<parameters.image>>
-          path: <<parameters.path>>
-          registry-url: <<parameters.registry-url>>
-          tag: <<parameters.tag>>
-          workspace-root: .
-      - gcp-gcr/push-image:
-          google-project-id: GOOGLE_PROJECT_ID
-          image: <<parameters.registry-name>>/<<parameters.image>>
-          registry-url: <<parameters.registry-url>>
-          tag: ${CIRCLE_SHA1}
-      - gcp-gcr/tag-image:
-          google-project-id: GOOGLE_PROJECT_ID
-          image: <<parameters.registry-name>>/<<parameters.image>>
-          registry-url: <<parameters.registry-url>>
-          source-tag: <<parameters.tag>>
-          target-tag: latest
-      - run: mkdir /tmp/workspace
-      - run: echo "-p <<parameters.service_name>>.docker.tag=$CIRCLE_SHA1" > /tmp/workspace/<<parameters.image>>
-      - run: cat /tmp/workspace/<<parameters.image>>
-      - persist_to_workspace:
-          root: /tmp/workspace
-          paths:
-            - <<parameters.image>>
+      - when:
+          condition: << parameters.should-run >>
+          steps:
+            - checkout
+            - gcp-gcr/gcr-auth:
+                gcloud-service-key: GCLOUD_SERVICE_KEY
+                google-compute-zone: GOOGLE_COMPUTE_ZONE
+                google-project-id: GOOGLE_PROJECT_ID
+                registry-url: <<parameters.registry-url>>
+            - gcp-gcr/build-image:
+                docker-context: .
+                dockerfile: build/Dockerfile
+                google-project-id: GOOGLE_PROJECT_ID
+                extra_build_args: <<parameters.extra_build_args>>
+                image: <<parameters.registry-name>>/<<parameters.image>>
+                path: <<parameters.path>>
+                registry-url: <<parameters.registry-url>>
+                tag: <<parameters.tag>>
+                workspace-root: .
+            - gcp-gcr/push-image:
+                google-project-id: GOOGLE_PROJECT_ID
+                image: <<parameters.registry-name>>/<<parameters.image>>
+                registry-url: <<parameters.registry-url>>
+                tag: ${CIRCLE_SHA1}
+            - gcp-gcr/tag-image:
+                google-project-id: GOOGLE_PROJECT_ID
+                image: <<parameters.registry-name>>/<<parameters.image>>
+                registry-url: <<parameters.registry-url>>
+                source-tag: <<parameters.tag>>
+                target-tag: latest
+            - run: mkdir /tmp/workspace
+            - run: echo "-p <<parameters.service_name>>.docker.tag=$CIRCLE_SHA1" > /tmp/workspace/<<parameters.image>>
+            - run: cat /tmp/workspace/<<parameters.image>>
+            - persist_to_workspace:
+                root: /tmp/workspace
+                paths:
+                  - <<parameters.image>>
+      - unless:
+          condition: << parameters.should-run >>
+          steps:
+            - run: echo "stop right there criminal scum"
 
   concat-versions:
     docker:
@@ -123,16 +162,46 @@ jobs:
           at: /tmp/workspace
       - run:
           name: "Fetch argocd cli"
-          command: "curl -sSL -o ./argocd https://${ARGOCD_SERVER}/download/argocd-linux-amd64 && chmod +x ./argocd"
-      - run:
-          name: "Set Image Tag"
-          command: |
-            for project in <<parameters.argo-cd-project>>; do
-              ./argocd app set $project $(cat /tmp/workspace/merged-versions) --grpc-web --auth-token=$ARGO_AUTH_TOKEN
-            done
-      - run:
-          name: "Sync"
-          command: "./argocd app sync <<parameters.argo-cd-project>> --grpc-web --auth-token=$ARGO_AUTH_TOKEN"
+          command: "Echo nah ah ah."
+
+  trigger-builds:
+    docker:
+      - image: cimg/go:1.17
+    steps:
+      - checkout
+      - compare-url/reconstruct
+      - run: cat BASE_COMPARE_COMMIT.txt
+      - run: go env -w GOPRIVATE=go.buf.build/library/go-grpc/*,github.com/fresh8gaming
+      - run: go install github.com/kynrai/tainted@latest
+      - run: go list ./cmd/... | tainted -from=$(cat BASE_COMPARE_COMMIT.txt) > changed-modules
+      - run: cat changed-modules
+      - run: |
+          curl -s \
+          -H "Circle-Token: ${CIRCLE_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -X POST \
+          -d "{ \"branch\": \"$CIRCLE_BRANCH\", \"parameters\": {
+            \"run_main\": 0, \
+            {{range $index, $element := .Services -}}{{if .CIEnabled}}{{if $index}},{{end}}\"build_{{ .Name }}\": $(cat changed-modules | grep {{ .Name }} -c){{end}}{{- end}} \
+           {{"}}"}}" \
+          https://circleci.com/api/v2/project/github/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pipeline
+      # - slack/status:
+      #     fail_only: true
+
+  trigger-all-builds:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run: |
+          curl -s \
+          -H "Circle-Token: ${CIRCLE_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -X POST \
+          -d "{ \"branch\": \"$CIRCLE_BRANCH\", \"parameters\": {
+            \"run_main\": 0, \
+            \"build_all\": 1 \
+           } }" \
+          https://circleci.com/api/v2/project/github/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pipeline
 
 workflows:
   version: 2
@@ -148,6 +217,7 @@ workflows:
             - go117
   {{- end}}
   main:
+    when: << pipeline.parameters.run_main >>
     jobs:
       - test-and-lint
 {{if $.HasGRPC}}
@@ -156,9 +226,49 @@ workflows:
       - docker/hadolint:
           dockerfiles: "build/Dockerfile"
           hadolint-tag: 2.9.3-debian
+      - trigger-builds:
+          requires:
+            # - test-and-lint
+{{if $.HasGRPC}}
+            - buf-lint
+{{- end}}
+            - docker/hadolint
+          context:
+            - fresh8bot
+      - approve-all-build-workflow:
+          type: approval
+          filters:
+            branches:
+              only:
+                - dynamic-ci-builds
+      - trigger-all-builds:
+          requires:
+            - approve-all-build-workflow
+            # - test-and-lint
+{{if $.HasGRPC}}
+            - buf-lint
+{{- end}}
+            - docker/hadolint
+          filters:
+            branches:
+              only:
+                - dynamic-ci-builds
+          context:
+            - fresh8bot
+
+  triggered-builds:
+    when:
+      or:
+{{range .Services -}}
+{{if .CIEnabled}}
+        - << pipeline.parameters.build_{{ .Name }} >>
+{{end}}
+{{- end}}
+    jobs:
 {{range .Services -}}
 {{if .CIEnabled}}
       - build-and-push-image:
+          should-run: << pipeline.parameters.build_{{ .Name }} >>
           name: build-and-push-{{ .Name }}
           image: {{ $.Name }}-{{ .Name }}
           service_name: {{ .NameUnderscored }}
@@ -166,12 +276,6 @@ workflows:
           extra_build_args: "--build-arg APP={{ .Name }}"
           context:
             - artifact-registry
-          requires:
-            - test-and-lint
-            - docker/hadolint
-{{if eq .Type "http-grpc"}}
-            - buf-lint
-{{- end}}
 {{end}}
 {{- end}}
       - concat-versions:
@@ -188,7 +292,7 @@ workflows:
           filters:
             branches:
               only:
-                - trunk
+                - dynamic-ci-builds
   {{ end }}
       - update-argo:
           name: update-staging-argo
@@ -207,7 +311,7 @@ workflows:
           filters:
             branches:
               only:
-                - trunk
+                - dynamic-ci-builds
 {{ end }}
       - update-argo:
           argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
@@ -224,4 +328,58 @@ workflows:
           filters:
             branches:
               only:
-                - trunk
+                - dynamic-ci-builds
+
+  all-builds:
+    when: << pipeline.parameters.build_all >>
+    jobs:
+{{range .Services -}}
+{{if .CIEnabled}}
+      - build-and-push-image:
+          should-run: 1
+          name: build-and-push-{{ .Name }}
+          image: {{ $.Name }}-{{ .Name }}
+          service_name: {{ .NameUnderscored }}
+          tag: ${CIRCLE_SHA1}
+          extra_build_args: "--build-arg APP={{ .Name }}"
+          context:
+            - artifact-registry
+{{end}}
+{{- end}}
+      - concat-versions:
+          requires:
+{{range .Services -}}
+{{if .CIEnabled}}
+            - build-and-push-{{ .Name }}
+{{end}}
+{{- end}}
+      - approve:
+          type: approval
+          filters:
+            branches:
+              only:
+                - dynamic-ci-builds
+      - update-argo:
+          argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
+          context:
+            - argo
+          requires:
+            - concat-versions
+            - approve
+
+  # This workflow triggers when all pipeline parameters are false and no other workflow is triggered
+  # without this workflow circle makes a no workflow error which is red
+  # and red is bad
+  nothing:
+    when:
+      not:
+        or:
+          - << pipeline.parameters.run_main >>
+          - << pipeline.parameters.build_all >>
+{{range .Services -}}
+{{if .CIEnabled}}
+          - << pipeline.parameters.build_{{ .Name }} >>
+{{end}}
+{{- end}}
+    jobs:
+      - nothing
