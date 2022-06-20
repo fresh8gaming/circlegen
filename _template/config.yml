@@ -291,7 +291,7 @@ workflows:
           requires:
 {{range .Services -}}
 {{if .CIEnabled}}
-            - build-and-push-{{ .Name }}
+      - build-and-push-{{ .Name }}
 {{end}}
 {{- end}}
 {{- if .Staging }}
