@@ -3,3 +3,4 @@ dist
 
 .metadata.yml
 .circleci/generated-config.yml
+.vscode

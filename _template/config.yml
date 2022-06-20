@@ -44,7 +44,7 @@ jobs:
 
   test-and-lint:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
     steps:
       - checkout
       - run: make install-tools
@@ -53,7 +53,7 @@ jobs:
 
   buf-lint:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
     steps:
       - checkout
       - run: make install-tools
@@ -175,7 +175,7 @@ jobs:
 
   trigger-builds:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
     steps:
       - checkout
       - compare-url/reconstruct
@@ -223,7 +223,7 @@ workflows:
           context:
             - whitesource
             - whitesource-{{ .Team }}
-            - go117
+            - go118
   {{- end}}
   main:
     when: << pipeline.parameters.run_main >>

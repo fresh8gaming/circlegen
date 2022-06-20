@@ -1,3 +1,3 @@
-FROM cimg/go:1.17
+FROM cimg/go:1.18
 
 COPY circlegen /usr/local/go/bin/circlegen
