@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"embed"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -50,7 +49,7 @@ func (ms MetadataService) NameUnderscored() string {
 }
 
 func main() {
-	metadataByte, err := ioutil.ReadFile(".metadata.yml")
+	metadataByte, err := os.ReadFile(".metadata.yml")
 	Fatal(err)
 
 	var metadata Metadata
