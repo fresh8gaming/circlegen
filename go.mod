@@ -3,6 +3,7 @@ module github.com/fresh8gaming/circlegen
 go 1.17
 
 require (
+	github.com/digitalocean/gta v0.0.0-20210909174801-4d63958976b7
 	github.com/golangci/golangci-lint v1.42.1
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/gotestsum v1.7.0

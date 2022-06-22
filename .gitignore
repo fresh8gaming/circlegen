@@ -1,6 +1,7 @@
 dist
 .idea
 bin
+circlegen
 
 .metadata.yml
 .circleci/generated-config.yml

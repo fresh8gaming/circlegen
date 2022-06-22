@@ -53,6 +53,9 @@ github.com/davecgh/go-spew/spew
 # github.com/denis-tingajkin/go-header v0.4.2
 ## explicit; go 1.15
 github.com/denis-tingajkin/go-header
+# github.com/digitalocean/gta v0.0.0-20210909174801-4d63958976b7
+## explicit; go 1.15
+github.com/digitalocean/gta
 # github.com/dnephin/pflag v1.0.7
 ## explicit; go 1.12
 github.com/dnephin/pflag
