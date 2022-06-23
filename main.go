@@ -63,8 +63,9 @@ func main() {
 	err = yaml.Unmarshal(metadataByte, &metadata)
 	Fatal(err)
 
+	// Compare to last commit on current branch
 	gitDifferOptions := []gta.GitDifferOption{
-		gta.SetBaseBranch("trunk"),
+		gta.SetBaseBranch(os.Getenv("CIRCLE_BRANCH") + "~1"),
 	}
 
 	options := []gta.Option{
