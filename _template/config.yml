@@ -107,6 +107,18 @@ jobs:
           paths:
             - <<parameters.image>>
 
+  concat-versions:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
+      - *attach_workspace
+      - run: cat /tmp/workspace/* | tr "\n" " " > /tmp/workspace/merged-versions
+      - run: cat /tmp/workspace/merged-versions
+      - persist_to_workspace:
+          root: *workspace_root
+          paths:
+            - merged-versions
+
   update-argo:
     parameters:
       argo-cd-project:
@@ -206,9 +218,15 @@ workflows:
           context:
             - argo
           requires:
-    {{range .ChangedServices }}
+            - concat-versions
+  {{- end }}
+      - concat-versions:
+          name: concat-versions
+          requires:
+  {{range .ChangedServices }}
             - build-and-push-{{ .Name }}
-    {{ end}}
+  {{ end}}
+  {{- if .Staging }}
     {{ if not $.CDEnabled }}
             - approve-staging
     {{ end }}
@@ -219,6 +237,7 @@ workflows:
           context:
             - argo
           requires:
+            - concat-versions
   {{range .ChangedServices }}
             - build-and-push-{{ .Name }}
   {{ end}}
@@ -252,6 +271,10 @@ workflows:
           argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
           context:
             - argo
+          requires:
+            - concat-versions-all-builds
+      - concat-versions:
+          name: concat-versions-all-builds
           requires:
 {{range .Services -}}
   {{if .CIEnabled}}
