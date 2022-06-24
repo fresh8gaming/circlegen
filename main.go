@@ -22,6 +22,7 @@ type Metadata struct {
 	Team                   string            `yaml:"team"`
 	Domain                 string            `yaml:"domain"`
 	WhitesourceEnabled     bool              `yaml:"whitesourceEnabled"`
+	KubescoreEnabled       bool              `yaml:"kubescoreEnabled"`
 	CDEnabled              bool              `yaml:"cdEnabled"`
 	Services               []MetadataService `yaml:"services"`
 	ArgoAppNamesProduction string            `yaml:"argoAppNamesProduction"`

@@ -141,6 +141,25 @@ jobs:
           name: "Sync"
           command: "./argocd app sync <<parameters.argo-cd-project>> --grpc-web --auth-token=$ARGO_AUTH_TOKEN"
 
+  kube-score:
+    parameters:
+      version:
+        type: string
+        default: 1.14.0
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run: 
+          name: Download helm to template charts
+          command: "curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh"
+      - run:
+          name: Download kube-score
+          command:  "curl -sSL -o ./kube-score https://github.com/zegl/kube-score/releases/download/v<<parameters.version>>/kube-score_<<parameters.version>>_linux_amd64 && chmod +x ./kube-score"
+      - run:
+          name: Scan charts
+          command: "helm template -n feeds-pipeline feeds-pipeline ./deploy/chart |./kube-score score - || true" 
+
 workflows:
   version: 2
   {{- if .WhitesourceEnabled}}
@@ -159,6 +178,9 @@ workflows:
       - test-and-lint
 {{if $.HasGRPC}}
       - buf-lint
+{{- end}}
+{{if $.KubescoreEnabled}}
+      - kube-score
 {{- end}}
       - docker/hadolint:
           dockerfiles: "build/Dockerfile"
