@@ -158,7 +158,7 @@ jobs:
           command:  "curl -sSL -o ./kube-score https://github.com/zegl/kube-score/releases/download/v<<parameters.version>>/kube-score_<<parameters.version>>_linux_amd64 && chmod +x ./kube-score"
       - run:
           name: Scan charts
-          command: "helm template -n feeds-pipeline feeds-pipeline ./deploy/chart |./kube-score score - || true" 
+          command: "helm template -n {{ .Name }} {{ .Name }} ./deploy/chart |./kube-score score - || true" 
 
 workflows:
   version: 2
