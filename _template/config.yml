@@ -158,7 +158,7 @@ jobs:
           command:  "curl -sSL -o ./kube-score https://github.com/zegl/kube-score/releases/download/v<<parameters.version>>/kube-score_<<parameters.version>>_linux_amd64 && chmod +x ./kube-score"
       - run:
           name: Scan charts
-          command: "cat ./deploy/chart/values-production/*.yaml > ./values-production.yaml && helm template -n {{ .Name }} {{ .Name }} --values ./deploy/chart/values.yaml --values ./values-production.yaml ./deploy/chart |./kube-score score --ignore-test container-image-tag - || true"
+          command: "cat ./deploy/chart/values-production/*.yaml > ./values-production.yaml && helm template -n {{ .Name }} {{ .Name }} --values ./deploy/chart/values.yaml --values ./values-production.yaml ./deploy/chart |./kube-score score --ignore-test container-image-tag --ignore-test horizontalpodautoscaler-has-target - || true"
 
 workflows:
   version: 2
