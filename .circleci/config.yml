@@ -60,7 +60,7 @@ jobs:
       - image: cimg/go:1.18
     steps:
       - checkout
-      - run: curl -sL https://git.io/goreleaser | bash
+      - run: curl -sL https://git.io/goreleaser | GORELEASER_CURRENT_TAG=${CIRCLE_TAG} bash
 
   install-tools:
     docker:
