@@ -26,7 +26,9 @@ jobs:
       - image: cimg/go:1.18
     steps:
       - checkout
+      {{- if !.SkipInstallTools}}
       - run: make install-tools
+      {{end}}
       - run: make test
       - run: make lint
 

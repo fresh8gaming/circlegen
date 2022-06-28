@@ -27,6 +27,7 @@ type Metadata struct {
 	Services               []MetadataService `yaml:"services"`
 	ArgoAppNamesProduction string            `yaml:"argoAppNamesProduction"`
 	ArgoAppNamesStaging    string            `yaml:"argoAppNamesStaging"`
+	SkipInstallTools       bool              `yaml:"skipInstallTools"`
 
 	ChangedServices []MetadataService
 }
