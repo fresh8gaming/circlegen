@@ -131,8 +131,24 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - run:
+          name: "Fetch argocd server version"
+          command: "curl -sSL -o ./argocd-server-version.json https://${ARGOCD_SERVER}/api/version"
+      - restore_cache:
+          keys:
+            - argocd-cli-{{"{{"}} checksum "argocd-server-version.json" {{"}}"}}
+      - run:
           name: "Fetch argocd cli"
-          command: "curl -sSL -o ./argocd https://${ARGOCD_SERVER}/download/argocd-linux-amd64 && chmod +x ./argocd"
+          command: |
+            FILE=./argocd
+            if test -f "$FILE"; then
+              echo "argocd cache hit, skipping"
+            else
+              "curl -sSL -o ./argocd https://${ARGOCD_SERVER}/download/argocd-linux-amd64 && chmod +x ./argocd"
+            fi
+      - save_cache:
+          key: argocd-cli-{{"{{"}} checksum "argocd-server-version.json" {{"}}"}}
+          paths:
+            - argocd
       - run:
           name: "Set Image Tag"
           command: |
@@ -236,7 +252,48 @@ workflows:
   {{ end }}
 {{ end }}
 
-
+{{if .ChangedServices}}
+  {{- if .Staging }}
+      - update-argo:
+          name: update-staging-argo
+          argo-cd-project: {{if .ArgoAppNamesStaging }}{{ .ArgoAppNamesStaging }}{{else}}{{.Name}}-staging{{end}}
+          context:
+            - argo
+          requires:
+            - concat-versions
+  {{- end }}
+      - concat-versions:
+          name: concat-versions
+          requires:
+  {{range .ChangedServices }}
+            - build-and-push-{{ .Name }}
+  {{ end}}
+  {{- if .Staging }}
+    {{ if not $.CDEnabled }}
+            - approve-staging
+    {{ end }}
+  {{- end }}
+      - update-argo:
+          name: update-production-argo
+          argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
+          context:
+            - argo
+          requires:
+            - concat-versions
+  {{range .ChangedServices }}
+            - build-and-push-{{ .Name }}
+  {{ end}}
+  {{ if $.NeedsApproval }}
+            - approve-production
+  {{ end }}
+  {{- if .Staging }}
+            - update-staging-argo
+  {{- end }}
+          filters:
+            branches:
+              only:
+                - trunk
+{{ end }}
 
 {{range .Services -}}
   {{if .CIEnabled}}
