@@ -164,7 +164,7 @@ jobs:
 
 workflows:
   version: 2
-  {{- if .WhitesourceEnabled}}
+{{- if .WhitesourceEnabled}}
   whitesource:
     jobs:
       - whitesource-scan/scan:
@@ -174,7 +174,7 @@ workflows:
             - whitesource
             - whitesource-{{ .Team }}
             - go118
-  {{- end}}
+{{- end}}
   main:
     jobs:
       - test-and-lint
@@ -218,8 +218,9 @@ workflows:
             - docker/hadolint
   {{end}}
 {{- end}}
+
 {{ if $.NeedsApproval }}
-      - approve:
+      - approve-production:
           type: approval
           filters:
             branches:
@@ -234,48 +235,9 @@ workflows:
                 - trunk
   {{ end }}
 {{ end }}
-{{if .ChangedServices}}
-  {{- if .Staging }}
-      - update-argo:
-          name: update-staging-argo
-          argo-cd-project: {{if .ArgoAppNamesStaging }}{{ .ArgoAppNamesStaging }}{{else}}{{.Name}}-staging{{end}}
-          context:
-            - argo
-          requires:
-            - concat-versions
-  {{- end }}
-      - concat-versions:
-          name: concat-versions
-          requires:
-  {{range .ChangedServices }}
-            - build-and-push-{{ .Name }}
-  {{ end}}
-  {{- if .Staging }}
-    {{ if not $.CDEnabled }}
-            - approve-staging
-    {{ end }}
-  {{- end }}
-      - update-argo:
-          name: update-production-argo
-          argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
-          context:
-            - argo
-          requires:
-            - concat-versions
-  {{range .ChangedServices }}
-            - build-and-push-{{ .Name }}
-  {{ end}}
-  {{ if $.NeedsApproval }}
-            - approve
-  {{ end }}
-  {{- if .Staging }}
-            - update-staging-argo
-  {{- end }}
-          filters:
-            branches:
-              only:
-                - trunk
-{{ end }}
+
+
+
 {{range .Services -}}
   {{if .CIEnabled}}
       - build-and-push-image:
@@ -290,13 +252,6 @@ workflows:
             - approve-trigger-all-builds
   {{end}}
 {{- end}}
-      - update-argo:
-          name: update-argo-all-builds
-          argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
-          context:
-            - argo
-          requires:
-            - concat-versions-all-builds
       - concat-versions:
           name: concat-versions-all-builds
           requires:
@@ -305,3 +260,40 @@ workflows:
             - all-builds-build-and-push-{{ .Name }}
   {{end}}
 {{- end}}
+      - approve-all-builds-production:
+          type: approval
+          filters:
+            branches:
+              only:
+                - trunk
+
+      - update-argo:
+          name: update-argo-all-builds-production
+          argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
+          context:
+            - argo
+          requires:
+            - concat-versions-all-builds
+{{ if .Staging}}
+            - update-argo-all-builds-staging
+            - approve-all-builds-production
+
+{{end}}
+
+{{ if .Staging}}
+      - approve-all-builds-staging:
+          type: approval
+          filters:
+            branches:
+              only:
+                - trunk
+
+      - update-argo:
+          name: update-argo-all-builds-staging
+          argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
+          context:
+            - argo
+          requires:
+            - concat-versions-all-builds
+            - approve-all-builds-staging
+{{end}}
