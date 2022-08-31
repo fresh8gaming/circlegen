@@ -89,6 +89,12 @@ func main() {
 	for _, changedPackage := range packages.AllChanges {
 		pathParts := strings.Split(changedPackage.ImportPath, "/")
 
+		// branch if there are no changes to specific services ie only vendored dependencies
+		if len(pathParts) < 5 {
+			log.Printf("skipping no specific code changes to %s a service, the go.mod and go.sum or another root level file may have changed", pathParts)
+			continue
+		}
+
 		if pathParts[1] == os.Getenv("CIRCLE_PROJECT_USERNAME") &&
 			pathParts[2] == os.Getenv("CIRCLE_PROJECT_REPONAME") &&
 			pathParts[3] == "cmd" {
