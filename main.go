@@ -29,7 +29,14 @@ type Metadata struct {
 	ArgoAppNamesStaging    string            `yaml:"argoAppNamesStaging"`
 	SkipInstallTools       bool              `yaml:"skipInstallTools"`
 
+	Deploy Deploy `yaml:"deploy"`
+
 	ChangedServices []MetadataService
+}
+
+type Deploy struct {
+	Platform string `yaml:"platform"`
+	Product  string `yaml:"product"`
 }
 
 type MetadataService struct {
