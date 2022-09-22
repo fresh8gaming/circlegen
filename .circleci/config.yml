@@ -57,14 +57,14 @@ workflows:
 jobs:
   release:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.18.6
     steps:
       - checkout
       - run: curl -sL https://git.io/goreleaser | GORELEASER_CURRENT_TAG=${CIRCLE_TAG} bash
 
   install-tools:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.18.6
     steps:
       - checkout
       - run: make install-tools
@@ -75,7 +75,7 @@ jobs:
 
   test:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.18.6
     steps:
       - checkout
       - attach_workspace:
@@ -84,7 +84,7 @@ jobs:
 
   lint:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.18.6
     steps:
       - checkout
       - attach_workspace:
