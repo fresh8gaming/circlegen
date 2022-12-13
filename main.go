@@ -28,8 +28,8 @@ type Metadata struct {
 	ArgoAppNamesProduction string            `yaml:"argoAppNamesProduction"`
 	ArgoAppNamesStaging    string            `yaml:"argoAppNamesStaging"`
 	SkipInstallTools       bool              `yaml:"skipInstallTools"`
-
-	Deploy Deploy `yaml:"deploy"`
+	SkipDockerLink         bool              `yaml:"skipDockerLint"`
+	Deploy                 Deploy            `yaml:"deploy"`
 
 	ChangedServices []MetadataService
 }
@@ -52,7 +52,6 @@ func (m Metadata) HasGRPC() bool {
 			return true
 		}
 	}
-
 	return false
 }
 

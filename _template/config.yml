@@ -200,9 +200,11 @@ workflows:
 {{if $.KubescoreEnabled}}
       - kube-score
 {{- end}}
+{{ if not .SkipDockerLink }}
       - docker/hadolint:
           dockerfiles: "build/Dockerfile"
           hadolint-tag: 2.9.3-debian
+{{- end}}
       - approve-trigger-all-builds:
           type: approval
           filters:
@@ -214,8 +216,9 @@ workflows:
 {{if $.HasGRPC}}
             - buf-lint
 {{- end}}
+{{ if not .SkipDockerLink }}
             - docker/hadolint
-
+{{- end}}
 {{range .ChangedServices -}}
   {{if .CIEnabled}}
       - build-and-push-image:
@@ -231,7 +234,9 @@ workflows:
     {{if $.HasGRPC}}
             - buf-lint
     {{- end}}
+    {{ if not .SkipDockerLink }}
             - docker/hadolint
+    {{- end}}
   {{end}}
 {{- end}}
 
