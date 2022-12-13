@@ -200,7 +200,7 @@ workflows:
 {{if $.KubescoreEnabled}}
       - kube-score
 {{- end}}
-{{ if not .SkipDockerLink }}
+{{ if not $.SkipDockerLink }}
       - docker/hadolint:
           dockerfiles: "build/Dockerfile"
           hadolint-tag: 2.9.3-debian
@@ -216,7 +216,7 @@ workflows:
 {{if $.HasGRPC}}
             - buf-lint
 {{- end}}
-{{ if not .SkipDockerLink }}
+{{ if not $.SkipDockerLink }}
             - docker/hadolint
 {{- end}}
 {{range .ChangedServices -}}
@@ -234,7 +234,7 @@ workflows:
     {{if $.HasGRPC}}
             - buf-lint
     {{- end}}
-    {{ if not .SkipDockerLink }}
+    {{ if not $.SkipDockerLink }}
             - docker/hadolint
     {{- end}}
   {{end}}
