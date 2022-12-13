@@ -84,6 +84,7 @@ jobs:
           docker-context: .
           dockerfile: build/Dockerfile
           google-project-id: GOOGLE_PROJECT_ID
+          no_output_timeout: 20m
           extra_build_args: <<parameters.extra_build_args>>
           image: <<parameters.registry-name>>/<<parameters.image>>
           path: <<parameters.path>>
