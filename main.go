@@ -43,7 +43,7 @@ type MetadataService struct {
 	Name       string `yaml:"name"`
 	Type       string `yaml:"type"`
 	CIEnabled  bool   `yaml:"ciEnabled"`
-	Dockerfile string `yaml:"dockerfile"`
+	Dockerfile string `yaml:"dockerfile,omitempty"`
 }
 
 //nolint:gocritic
@@ -62,15 +62,6 @@ func (m Metadata) NeedsApproval() bool {
 
 func (ms MetadataService) NameUnderscored() string {
 	return strings.ReplaceAll(ms.Name, "-", "_")
-}
-
-const defaultDockerfileName = "Dockerfile"
-
-func (ms MetadataService) DockerfileName() string {
-	if ms.Dockerfile == "" {
-		return defaultDockerfileName
-	}
-	return ms.Dockerfile
 }
 
 func main() {

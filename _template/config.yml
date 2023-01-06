@@ -228,7 +228,7 @@ workflows:
   {{if .CIEnabled}}
       - build-and-push-image:
           name: build-and-push-{{ .Name }}
-          dockerfile-name: {{ $.DockerfileName }}
+          dockerfile-name: {{ .Dockerfile }}
           image: {{ $.Name }}-{{ .Name }}
           service_name: {{ .NameUnderscored }}
           tag: ${CIRCLE_SHA1}
@@ -312,7 +312,7 @@ workflows:
           name: all-builds-build-and-push-{{ .Name }}
           image: {{ $.Name }}-{{ .Name }}
           service_name: {{ .NameUnderscored }}
-          dockerfile-name: {{ $.DockerfileName }}
+          dockerfile-name: {{ .Dockerfile }}
           tag: ${CIRCLE_SHA1}
           extra_build_args: "--build-arg APP={{ .Name }}"
           context:
