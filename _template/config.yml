@@ -4,7 +4,7 @@ executors:
   gcp-default:
     description: A debian-based machine executor
     machine:
-      image: ubuntu-2004:202010-01
+      image: ubuntu-2004:2022.10.1
 
 references:
   workspace_root: &workspace_root /tmp/workspace
