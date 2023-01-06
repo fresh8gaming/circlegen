@@ -58,6 +58,10 @@ jobs:
           Path to the directory containing your Dockerfile, defaults to . (working
           directory)
         type: string
+      dockerfile-name:
+        default: Dockerfile
+        description: The name of the Dockerfile to build.
+        type: string
       registry-url:
         default: europe-docker.pkg.dev
         description: The GAR URL
@@ -82,7 +86,7 @@ jobs:
           registry-url: <<parameters.registry-url>>
       - gcp-gcr/build-image:
           docker-context: .
-          dockerfile: build/Dockerfile
+          dockerfile: build/<<parameters.dockerfile-name>>
           google-project-id: GOOGLE_PROJECT_ID
           no_output_timeout: 20m
           extra_build_args: <<parameters.extra_build_args>>
@@ -224,6 +228,7 @@ workflows:
   {{if .CIEnabled}}
       - build-and-push-image:
           name: build-and-push-{{ .Name }}
+          dockerfile-name: {{ $.DockerfileName }}
           image: {{ $.Name }}-{{ .Name }}
           service_name: {{ .NameUnderscored }}
           tag: ${CIRCLE_SHA1}
@@ -307,6 +312,7 @@ workflows:
           name: all-builds-build-and-push-{{ .Name }}
           image: {{ $.Name }}-{{ .Name }}
           service_name: {{ .NameUnderscored }}
+          dockerfile-name: {{ .DockerfileName }}
           tag: ${CIRCLE_SHA1}
           extra_build_args: "--build-arg APP={{ .Name }}"
           context:
