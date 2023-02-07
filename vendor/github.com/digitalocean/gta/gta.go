@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"go/build"
 	"go/scanner"
+	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"sort"
@@ -89,6 +91,7 @@ type GTA struct {
 	packager Packager
 	prefixes []string
 	tags     []string
+	roots    []string
 }
 
 // New returns a new GTA with various options passed to New. Options will be
@@ -103,6 +106,14 @@ func New(opts ...Option) (*GTA, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if gta.roots == nil {
+		roots, err := toplevel()
+		if err != nil {
+			return nil, fmt.Errorf("could not get top level directory")
+		}
+		gta.roots = roots
 	}
 
 	// set the default packager after applying option so that the default
@@ -140,17 +151,17 @@ func New(opts ...Option) (*GTA, error) {
 // "foo" has changed, it has two dependent packages, "bar" and "qux". The
 // result would be then:
 //
-//   Dependencies = {"foo": ["bar", "qux"]}
-//   Changes      = ["foo"]
-//   AllChanges   = ["foo", "bar", "qux]
+//	Dependencies = {"foo": ["bar", "qux"]}
+//	Changes      = ["foo"]
+//	AllChanges   = ["foo", "bar", "qux]
 //
 // Note that two different changed package might have the same dependent
 // package. Below you see that both "foo" and "foo2" has changed. Each have
 // "bar" because "bar" imports both "foo" and "foo2", i.e:
 //
-//   Dependencies = {"foo": ["bar", "qux"], "foo2" : ["afa", "bar", "qux"]}
-//   Changes      = ["foo", "foo2"]
-//   AllChanges   = ["foo", "foo2", "afa", "bar", "qux]
+//	Dependencies = {"foo": ["bar", "qux"], "foo2" : ["afa", "bar", "qux"]}
+//	Changes      = ["foo", "foo2"]
+//	AllChanges   = ["foo", "foo2", "afa", "bar", "qux]
 func (g *GTA) ChangedPackages() (*Packages, error) {
 	paths, err := g.markedPackages()
 	if err != nil {
@@ -237,25 +248,68 @@ func (g *GTA) markedPackages() (map[string]map[string]bool, error) {
 		return nil, fmt.Errorf("diffing directory for dirty packages, %v", err)
 	}
 
-	// we build our set of initial dirty packages from the git diff. The map
-	// value is true when the package was deleted.
+	// We build our set of initial dirty packages from the git diff. The map
+	// value is true when the package was deleted. The map keys are package
+	// import paths.
 	changed := make(map[string]bool)
+	embeddedChanged := make(map[string]struct{})
+	onlyTestsAffected := make(map[string]struct{})
+	onlyTestPackagesChanged := make(map[string]struct{})
 	for abs, dir := range dirs {
 		// TODO(bc): handle changes to go.mod when vendoring is not being used.
 
-		// ignore deleted directories that contained no go files.
-		// TODO(bc): make sure it was not within a testdata directory.
-		if !dir.Exists && !hasGoFile(dir.Files) {
-			continue
+		// Add packages that embed the files of dir.
+		for _, f := range dir.Files {
+			// An embedded file may:
+			//   1. reside in a directory that contains go files and
+			//   2. reside in a directory that does not contain any go files
+			//   3. be embedded by multiple packages
+			// Therefore, do not try short-circuiting anything; just record that the
+			// embedding packages are changed.
+			for _, importPath := range g.packager.EmbeddedBy(filepath.Join(abs, f)) {
+				embeddedChanged[importPath] = struct{}{}
+				// Set the value to false, because the package is known to exist.
+				changed[importPath] = false
+			}
 		}
 
-		// Avoid .foo, _foo, and testdata directory trees how the go tool does!
-		// See https://github.com/golang/tools/blob/3a85b8d/go/buildutil/allpackages.go#L93
-		// Above link is not guaranteed to work.
-		base := filepath.Base(abs)
-		parent := filepath.Base(filepath.Dir(abs))
-		// TODO(bc): do not ignore testdata directories - use their parent instead.
-		if base == "" || base[0] == '.' || base[0] == '_' || base == "testdata" || parent == "testdata" {
+		if isIgnoredByGo(abs, g.roots) {
+			if !isTestData(abs) {
+				continue
+			}
+
+			absAncestor := deepestUnignoredDir(abs, g.roots)
+			if _, ok := dirs[absAncestor]; ok {
+				// continue when the deepest unignored directory will be explicitly handled
+				continue
+			}
+
+			// TODO(bc): take GOPATH / module root into account and don't try going above them?
+			if absAncestor == "/" {
+				continue
+			}
+
+			// set abs and dir to respective values to be evaluated.
+			abs = absAncestor
+			onlyTestsAffected[abs] = struct{}{}
+			// Assume the directory exists; since it's not in the list of dirs, it
+			// likely still exists. The only way it wouldn't would be is if the only
+			// files in it were all deleted and it didn't directly contain any files.
+			// It should be ok to assume it does exist even in that unlikely
+			// situation.
+			dir = Directory{
+				Exists: true,
+			}
+		} else {
+			if hasOnlyTestFilenames(dir.Files) {
+				onlyTestsAffected[abs] = struct{}{}
+			}
+		}
+
+		// Ignore deleted directories that did not contain files. Continue without
+		// considering embedded files, because it is unknown whether a deleted file
+		// was previously embedded.
+		if !dir.Exists && !hasGoFile(dir.Files) {
 			continue
 		}
 
@@ -271,6 +325,9 @@ func (g *GTA) markedPackages() (map[string]map[string]bool, error) {
 					pkg.ImportPath = importPath
 
 					changed[pkg.ImportPath] = true
+					if _, ok := onlyTestsAffected[abs]; ok {
+						onlyTestPackagesChanged[pkg.ImportPath] = struct{}{}
+					}
 					continue
 				}
 				// there are and were no buildable go files in this directory
@@ -285,7 +342,11 @@ func (g *GTA) markedPackages() (map[string]map[string]bool, error) {
 					if err != nil {
 						continue
 					}
+
 					changed[importPath] = true
+					if _, ok := onlyTestsAffected[abs]; ok {
+						onlyTestPackagesChanged[importPath] = struct{}{}
+					}
 					continue
 				}
 			}
@@ -294,6 +355,15 @@ func (g *GTA) markedPackages() (map[string]map[string]bool, error) {
 
 		// create a simple set of changed pkgs by import path
 		changed[pkg.ImportPath] = false
+		if _, ok := onlyTestsAffected[abs]; ok {
+			onlyTestPackagesChanged[pkg.ImportPath] = struct{}{}
+		}
+	}
+
+	for k := range onlyTestPackagesChanged {
+		if _, ok := embeddedChanged[k]; ok {
+			delete(onlyTestPackagesChanged, k)
+		}
 	}
 
 	// we build the dependent graph
@@ -305,6 +375,12 @@ func (g *GTA) markedPackages() (map[string]map[string]bool, error) {
 	paths := map[string]map[string]bool{}
 	for change := range changed {
 		marked := make(map[string]bool)
+
+		if _, ok := onlyTestPackagesChanged[change]; ok {
+			marked[change] = !changed[change]
+			paths[change] = marked
+			continue
+		}
 
 		// we traverse the graph and build our list of mark all dependents
 		graph.Traverse(change, marked)
@@ -403,23 +479,105 @@ func hasPrefixIn(s string, prefixes []string) bool {
 	return false
 }
 
-func patternsFrom(differ Differ, prefixes []string) ([]string, error) {
-	dirs, err := differ.Diff()
-	if err != nil {
-		return nil, err
-	}
-	files, err := differ.DiffFiles()
-	if err != nil {
-		return nil, err
-	}
-
-	patterns := make([]string, 0, len(files))
-	for f := range files {
-		if d := dirs[filepath.Dir(f)]; !d.Exists {
-			continue
+func isIgnoredByGo(name string, roots []string) bool {
+	for _, root := range roots {
+		if root == name {
+			return false
 		}
-		patterns = append(patterns, "file="+f)
 	}
 
-	return append(patterns, prefixes...), nil
+	base := filepath.Base(name)
+	if base[0] == filepath.Separator {
+		return false
+	}
+
+	// Avoid .foo, _foo, and testdata directory trees how the go tool does!
+	// See https://github.com/golang/tools/blob/3a85b8d/go/buildutil/allpackages.go#L93
+	// Above link is not guaranteed to work.
+	if base == "" || base[0] == '.' || base[0] == '_' || base == "testdata" {
+		return true
+	}
+
+	dir := filepath.Dir(name)
+	if dir == "." {
+		return false
+	}
+
+	return isIgnoredByGo(filepath.Dir(name), roots)
+}
+
+func isTestData(name string) bool {
+	base := filepath.Base(name)
+	if base[0] == filepath.Separator {
+		return false
+	}
+
+	if name == "testdata" || base == "testdata" {
+		return true
+	}
+
+	dir := filepath.Dir(name)
+	if dir == "." {
+		return false
+	}
+
+	return isTestData(filepath.Dir(name))
+}
+
+func deepestUnignoredDir(name string, roots []string) string {
+	if name == "." || name == "/" {
+		return name
+	}
+
+	if isIgnoredByGo(name, roots) {
+		return deepestUnignoredDir(filepath.Dir(name), roots)
+	}
+
+	return name
+}
+
+func hasOnlyTestFilenames(sl []string) bool {
+	for _, v := range sl {
+		if !strings.HasSuffix(v, "_test.go") {
+			return false
+		}
+	}
+	return true
+}
+
+func toplevel() ([]string, error) {
+	if os.Getenv("GO111MODULE") == "off" {
+		return gopaths()
+	}
+
+	root, err := moduleroot()
+	if err != nil {
+		return nil, err
+	}
+	return []string{root}, nil
+
+}
+
+func gopaths() ([]string, error) {
+	cmd := exec.Command("go", "env", "GOPATH")
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("could get not get GOPATH: %w", err)
+	}
+
+	var roots []string
+	for _, v := range strings.Split(string(b), string(os.PathListSeparator)) {
+		roots = append(roots, strings.TrimSpace(v))
+	}
+	return roots, nil
+}
+
+func moduleroot() (string, error) {
+	cmd := exec.Command("go", "list", "-m", "-f", "{{.Dir}}")
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("could get not get module root: %w", err)
+	}
+
+	return strings.TrimSpace(string(b)), nil
 }

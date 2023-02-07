@@ -137,7 +137,7 @@ func (d *differ) DiffFiles() (map[string]bool, error) {
 	return existsFiles, nil
 }
 
-func getMergeParents() (parent1 string, rightwardParents []string, err error) {
+func (g *git) getMergeParents() (parent1 string, rightwardParents []string, err error) {
 	out, err := exec.Command("git", "log", "-1", "--pretty=format:%p").Output()
 	if err != nil {
 		return
@@ -172,10 +172,24 @@ func (g *git) diff() (map[string]struct{}, error) {
 				return nil, err
 			}
 			root := strings.TrimSpace(string(out))
-			parent1 := g.baseBranch
+			// get the revision from which HEAD was branched from g.baseBranch.
+			parent1, err := g.branchPointOf("HEAD")
+			if err != nil {
+				return nil, err
+			}
+
+			// If the branch point is unknown, fall back to using the base branch. In
+			// most cases, this will be fine, but results in a corner case when base
+			// branch has been merged into the branch since branch was created. In
+			// that case, the differences from the base branch and the most recent
+			// merge will not be considered.
+			if parent1 == "" {
+				parent1 = g.baseBranch
+			}
+
 			rightwardParents := []string{"HEAD"}
 			if g.useMergeCommit {
-				parent1, rightwardParents, err = getMergeParents()
+				parent1, rightwardParents, err = g.getMergeParents()
 				if err != nil {
 					return nil, err
 				}
@@ -245,6 +259,40 @@ func diffPaths(root string, r io.Reader) (map[string]struct{}, error) {
 func exists(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
+}
+
+// branchPointOf will return the oldest commit on g.baseBranch that is in
+// branch. If no such commit exists (e.g. branch is a shallow clone or branch
+// does not share history with g.baseBranch), then an empty string is returned.
+func (g *git) branchPointOf(branch string) (string, error) {
+	// Use --topo-order to ensure graph order is respected.
+	//
+	// Use --parents so each line will list the commit and its parents.
+	//
+	// Use --reverse so the first commit in the output will be the oldest commit.
+	// branch that is not on the base branch.
+	//
+	// Do NOT use --first-parent, because the branch may have had merges from
+	// other branches into it, and we want the oldest possible branch point
+	// from the base branch in branch.
+	//
+	// Do NOT try using git merge-base at all. It would not deliver the right
+	// result when g.baseBranch had been merged into branch sometime after branch
+	// was created from g.baseBranch. In such a case, the merge base would be the
+	// the merge commit where g.baseBranch was merged into branch.
+	out, err := exec.Command("git", "rev-list", "--topo-order", "--parents", "--reverse", branch, "^"+g.baseBranch).Output()
+	if err != nil {
+		return "", nil
+	}
+
+	lines := strings.Split(string(out), "\n")
+	firstCommit := lines[0]
+	ancestors := strings.Fields(firstCommit)
+	if len(ancestors) < 2 {
+		return "", nil
+	}
+	branchPoint := ancestors[1]
+	return branchPoint, nil
 }
 
 type fileDiffer struct {

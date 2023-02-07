@@ -51,6 +51,8 @@ type Packager interface {
 	// DependentGraph returns the DependentGraph for the current
 	// Golang workspace as defined by their import paths.
 	DependentGraph() (*Graph, error)
+	// EmbeddedBy returns the package import paths of packages that embed a file.
+	EmbeddedBy(string) []string
 }
 
 func NewPackager(patterns, tags []string) Packager {
@@ -59,14 +61,15 @@ func NewPackager(patterns, tags []string) Packager {
 }
 
 func newPackager(cfg *packages.Config, ctx build.Context, patterns []string) Packager {
-	moduleNamesByDir, forward, reverse, err := dependencyGraph(cfg, patterns)
+	moduleNamesByDir, forward, reverse, packagesByEmbedFile, err := dependencyGraph(cfg, patterns)
 	return &packageContext{
-		ctx:               &ctx,
-		err:               err,
-		packages:          make(map[string]struct{}),
-		forward:           forward,
-		reverse:           reverse,
-		modulesNamesByDir: moduleNamesByDir,
+		ctx:                 &ctx,
+		err:                 err,
+		packages:            make(map[string]struct{}),
+		forward:             forward,
+		reverse:             reverse,
+		modulesNamesByDir:   moduleNamesByDir,
+		packagesByEmbedFile: packagesByEmbedFile,
 	}
 }
 
@@ -76,6 +79,7 @@ func newLoadConfig(tags []string) *packages.Config {
 	return &packages.Config{
 		Mode: packages.NeedName |
 			packages.NeedFiles |
+			packages.NeedEmbedFiles |
 			packages.NeedImports |
 			packages.NeedDeps |
 			packages.NeedModule,
@@ -96,10 +100,22 @@ type packageContext struct {
 	forward map[string]map[string]struct{}
 	// reverse is a reverse dependency graph (import path -> (dependent import path -> struct{}{}))
 	reverse map[string]map[string]struct{}
-	// modulesNamesByDir is a map of directories to import paths. absolute path directory -> import path/module name
+	// modulesNamesByDir is a map of directories to import paths. absolute path
+	// directory -> import path/module name
 	modulesNamesByDir map[string]string
+	// packagesByEmbedFile is a map of absolute file paths to packages that
+	// depend on those files.
+	packagesByEmbedFile map[string][]string
+}
 
-	packagesConfig *packages.Config
+// EmbeddedBy returns the import paths of packages that embed the file at fn.
+func (p *packageContext) EmbeddedBy(fn string) []string {
+	// return a copy of the slice value so that the source cannot be modified by callers.
+	src := p.packagesByEmbedFile[fn]
+
+	sl := make([]string, 0, len(src))
+	sl = append(sl, src...)
+	return sl
 }
 
 // PackageFromDir returns a build package from a directory.
@@ -212,7 +228,7 @@ func resolveLocal(pkg *Package, dir string, modulesByDir map[string]string) {
 // module aware mode and flattened forward and reverse transitive dependency
 // graphs. When in GOPATH mode the map of directories to import paths will be
 // empty.
-func dependencyGraph(cfg *packages.Config, patterns []string) (moduleNamesByDir map[string]string, forward map[string]map[string]struct{}, reverse map[string]map[string]struct{}, err error) {
+func dependencyGraph(cfg *packages.Config, patterns []string) (moduleNamesByDir map[string]string, forward map[string]map[string]struct{}, reverse map[string]map[string]struct{}, packagesByEmbedFile map[string][]string, err error) {
 	loadAllPackages := true
 	for i, pat := range patterns {
 		if strings.HasPrefix(pat, "file=") {
@@ -234,12 +250,13 @@ func dependencyGraph(cfg *packages.Config, patterns []string) (moduleNamesByDir 
 
 	loadedPackages, err := packages.Load(cfg, patterns...)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("loading packages: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("loading packages: %w", err)
 	}
 
 	moduleNamesByDir = make(map[string]string)
 	forward = make(map[string]map[string]struct{})
 	reverse = make(map[string]map[string]struct{})
+	packagesByEmbedFile = make(map[string][]string)
 
 	seen := make(map[string]struct{})
 	var addPackage func(pkg *packages.Package)
@@ -268,6 +285,11 @@ func dependencyGraph(cfg *packages.Config, patterns []string) (moduleNamesByDir 
 		// normalize the import path so that test packages will be flattened into
 		// the package path of the primary package.
 		pkgPath := normalizeImportPath(pkg)
+
+		for _, f := range pkg.EmbedFiles {
+			sl := packagesByEmbedFile[f]
+			packagesByEmbedFile[f] = append(sl, pkgPath)
+		}
 
 		if _, ok := forward[pkgPath]; !ok {
 			forward[pkgPath] = make(map[string]struct{})
@@ -300,7 +322,7 @@ func dependencyGraph(cfg *packages.Config, patterns []string) (moduleNamesByDir 
 		addPackage(pkg)
 	}
 
-	return moduleNamesByDir, forward, reverse, nil
+	return moduleNamesByDir, forward, reverse, packagesByEmbedFile, nil
 }
 
 // normalizeImportPath will return the import path of pkg. The import path may
