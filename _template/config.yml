@@ -232,7 +232,7 @@ workflows:
           image: {{ $.Name }}-{{ .Name }}
           service_name: {{ .NameUnderscored }}
           tag: ${CIRCLE_SHA1}
-          extra_build_args: "--build-arg APP={{ .Name }}"
+          extra_build_args: "--build-arg APP={{ .Name }}{{ $.OverArgOverrides }}"
           context:
             - artifact-registry
           requires:

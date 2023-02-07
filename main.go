@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"embed"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -32,6 +33,8 @@ type Metadata struct {
 	SkipInstallTools       bool              `yaml:"skipInstallTools"`
 	SkipDockerLink         bool              `yaml:"skipDockerLint"`
 	Deploy                 Deploy            `yaml:"deploy"`
+	GoVersion              string            `yaml:"goVersion,omitempty"`
+	AlpineVersion          string            `yaml:"alpineVersion,omitempty"`
 
 	ChangedServices []MetadataService
 }
@@ -61,6 +64,29 @@ func (m Metadata) HasGRPC() bool {
 //nolint:gocritic
 func (m Metadata) NeedsApproval() bool {
 	return m.Staging || !m.CDEnabled
+}
+
+//nolint:gocritic
+func (m Metadata) OverrideGoVersion() string {
+	out := ""
+	if m.GoVersion != "" {
+		out = fmt.Sprintf(" GO_VERSION=%s", m.GoVersion)
+	}
+	return out
+}
+
+//nolint:gocritic
+func (m Metadata) OverrideAlpineVersions() string {
+	out := ""
+	if m.AlpineVersion != "" {
+		out = fmt.Sprintf(" ALPINE_VERSION=%s", m.AlpineVersion)
+	}
+	return out
+}
+
+//nolint:gocritic
+func (m Metadata) ArgOverrides() string {
+	return m.OverrideGoVersion() + m.OverrideAlpineVersions()
 }
 
 func (ms MetadataService) NameUnderscored() string {
@@ -115,6 +141,9 @@ func main() {
 				}
 			}
 		}
+	}
+	if metadata.GoVersion == "" {
+		metadata.GoVersion = ""
 	}
 
 	f, err := os.Create(".circleci/generated-config.yml")
