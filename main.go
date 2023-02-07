@@ -13,6 +13,8 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+const pathParts = 5
+
 //go:embed _template/config.yml
 var configTemplate embed.FS
 
@@ -47,7 +49,7 @@ type MetadataService struct {
 }
 
 //nolint:gocritic
-func (m Metadata) HasGRPC() bool {
+func (m *Metadata) HasGRPC() bool {
 	for _, service := range m.Services {
 		if service.Type == "http-grpc" {
 			return true
@@ -56,7 +58,7 @@ func (m Metadata) HasGRPC() bool {
 	return false
 }
 
-func (m Metadata) NeedsApproval() bool {
+func (m *Metadata) NeedsApproval() bool {
 	return m.Staging || !m.CDEnabled
 }
 
@@ -97,8 +99,9 @@ func main() {
 		pathParts := strings.Split(changedPackage.ImportPath, "/")
 
 		// branch if there are no changes to specific services ie only vendored dependencies
-		if len(pathParts) < 5 {
-			log.Printf("skipping no specific code changes to %s a service, the go.mod and go.sum or another root level file may have changed", pathParts)
+		if len(pathParts) < pathParts {
+			str := "a service, the go.mod and go.sum or another root level file may have changed"
+			log.Printf("skipping no specific code changes to %s %s", pathParts, str)
 			continue
 		}
 
@@ -111,7 +114,6 @@ func main() {
 				}
 			}
 		}
-
 	}
 
 	f, err := os.Create(".circleci/generated-config.yml")
