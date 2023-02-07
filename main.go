@@ -49,6 +49,9 @@ type MetadataService struct {
 }
 
 func (m *Metadata) HasGRPC() bool {
+	if m == nil {
+		return false
+	}
 	for _, service := range m.Services {
 		if service.Type == "http-grpc" {
 			return true
