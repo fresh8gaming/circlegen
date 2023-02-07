@@ -54,7 +54,6 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
     - dupl
@@ -77,21 +76,16 @@ linters:
     - noctx
     - nolintlint
     - prealloc
-    - rowserrcheck
-    - scopelint
     - staticcheck
-    - structcheck
     - stylecheck
     - testpackage
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
     - funlen
     - gocyclo
-    - golint
     - gocognit
     - godox
     - nestif
