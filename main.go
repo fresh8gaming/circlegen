@@ -48,7 +48,6 @@ type MetadataService struct {
 	Dockerfile string `yaml:"dockerfile,omitempty"`
 }
 
-//nolint:gocritic
 func (m *Metadata) HasGRPC() bool {
 	for _, service := range m.Services {
 		if service.Type == "http-grpc" {

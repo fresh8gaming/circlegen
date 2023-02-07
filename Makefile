@@ -1,4 +1,6 @@
-SHELL := env PATH=$(PWD)/bin:$(PATH) GOBIN=$(PWD)/bin /bin/bash
+#SHELL := env PATH=$(PWD)/bin:$(PATH) GOBIN=$(PWD)/bin /bin/bash
+export PATH := $(PWD)/bin:$(PATH)
+export GOBIN := $(PWD)/bin
 
 lint:
 	golangci-lint run -c .golangci.yml -v
