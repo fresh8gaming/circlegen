@@ -13,7 +13,7 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-const pathParts = 5
+const expectedPathParts = 5
 
 //go:embed _template/config.yml
 var configTemplate embed.FS
@@ -99,7 +99,7 @@ func main() {
 		pathParts := strings.Split(changedPackage.ImportPath, "/")
 
 		// branch if there are no changes to specific services ie only vendored dependencies
-		if len(pathParts) < pathParts {
+		if len(pathParts) < expectedPathParts {
 			str := "a service, the go.mod and go.sum or another root level file may have changed"
 			log.Printf("skipping no specific code changes to %s %s", pathParts, str)
 			continue
