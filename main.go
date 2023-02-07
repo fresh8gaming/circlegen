@@ -70,7 +70,7 @@ func (m Metadata) NeedsApproval() bool {
 func (m Metadata) OverrideGoVersion() string {
 	out := ""
 	if m.GoVersion != "" {
-		out = fmt.Sprintf(" GO_VERSION=%s", m.GoVersion)
+		out = fmt.Sprintf(" --build-arg GO_VERSION=%s", m.GoVersion)
 	}
 	return out
 }
@@ -79,7 +79,7 @@ func (m Metadata) OverrideGoVersion() string {
 func (m Metadata) OverrideAlpineVersions() string {
 	out := ""
 	if m.AlpineVersion != "" {
-		out = fmt.Sprintf(" ALPINE_VERSION=%s", m.AlpineVersion)
+		out = fmt.Sprintf(" --build-arg ALPINE_VERSION=%s", m.AlpineVersion)
 	}
 	return out
 }
