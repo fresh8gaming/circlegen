@@ -214,10 +214,10 @@ workflows:
                 - trunk
           requires:
             - test-and-lint
+            - docker/hadolint
 {{if $.HasGRPC}}
             - buf-lint
 {{- end}}
-            - docker/hadolint
 {{range .ChangedServices -}}
   {{if .CIEnabled}}
       - build-and-push-image:
@@ -231,10 +231,10 @@ workflows:
             - artifact-registry
           requires:
             - test-and-lint
+            - docker/hadolint
     {{if $.HasGRPC}}
             - buf-lint
     {{- end}}
-            - docker/hadolint
   {{end}}
 {{- end}}
 
