@@ -46,7 +46,7 @@ There are a number of options available to give you some degree of control over 
 | team                   | string    | Which team owns the project                                                                                                               |
 | domain                 | string    | Which domain the project is associated with                                                                                               |
 | staging                | boolean   | If the project requires a staging environment                                                                                             |
-| whitesourceEnabled     | boolean   | If the project should be using Whitesource for vulnerability scanning                                                                     |
+| disableWhitesource     | boolean   | If the project should disable Whitesource for vulnerability scanning                                                                      |
 | kubescoreEnabled       | boolean   | If the project should be using Kubescore for analysing K8s configuration                                                                  |
 | cdEnabled              | boolean   | If the project runs with Continuous Deployment (no/less approval steps)                                                                   |
 | argoAppNamesProduction | string    | Comma separated list of Argo application names that are associated with the production project. Used for HA services in multiple clusters |
