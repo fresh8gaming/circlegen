@@ -51,8 +51,6 @@ There are a number of options available to give you some degree of control over 
 | cdEnabled              | boolean   | If the project runs with Continuous Deployment (no/less approval steps)                                                                   |
 | argoAppNamesProduction | string    | Comma separated list of Argo application names that are associated with the production project. Used for HA services in multiple clusters |
 | argoAppNamesStaging    | string    | Comma separated list of Argo application names that are associated with the staging project. Used for HA services in multiple clusters    |
-| skipInstallTools       | string    | If the project should skip installing tools locally for the `test-and-lint` step                                                          |
-| skipDockerLint         | string    | If the project should skip the `hadolint` step                                                                                            |
 | goVersion              | string    | Manual override of the Go version, for `cimg/go` tags, and Dockerfiles                                                                    |
 | alpineVersion          | string    | Manual override of alpine version in Dockerfiles                                                                                          |
 | services               | []Service | List of services defined in the project                                                                                                   |
