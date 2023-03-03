@@ -192,7 +192,7 @@ workflows:
           context:
             - whitesource
             - whitesource-{{ .Team }}
-            - go118
+            - go{{ .GoVersion }}
 {{- end}}
   main:
     jobs:
