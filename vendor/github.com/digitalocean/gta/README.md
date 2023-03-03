@@ -13,7 +13,7 @@ since you will know which packages (and dependencies) have changed.
 ## Installation
 
 ```sh
-go get github.com/digitalocean/gta/...
+go install github.com/digitalocean/gta/cmd/gta
 ```
 
 After installation, you will have a `gta` binary in `$GOPATH/bin/`
@@ -23,13 +23,13 @@ After installation, you will have a `gta` binary in `$GOPATH/bin/`
 List packages that should be tested since they have deviated from master.
 
 ```sh
-gta -include $(go list ./...)
+gta -include "$(go list -f '{{ .Module.Path }}')/"
 ```
 
 List packages that have deviated from the most recent merge commit.
 
 ```sh
-gta -include $(go list ./...) -merge
+gta -include "$(go list -f '{{ .Module.Path }}')/"
 ```
 
 ## What gta does

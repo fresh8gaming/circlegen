@@ -94,7 +94,7 @@ github.com/davecgh/go-spew/spew
 # github.com/denis-tingaikin/go-header v0.4.3
 ## explicit; go 1.17
 github.com/denis-tingaikin/go-header
-# github.com/digitalocean/gta v0.0.0-20220929224629-a421fed7f063
+# github.com/digitalocean/gta v0.0.0-20230224222428-d9942704d9f4
 ## explicit; go 1.18
 github.com/digitalocean/gta
 # github.com/dnephin/pflag v1.0.7
@@ -637,7 +637,7 @@ golang.org/x/exp/slices
 # golang.org/x/exp/typeparams v0.0.0-20221208152030-732eee02a75a
 ## explicit; go 1.18
 golang.org/x/exp/typeparams
-# golang.org/x/mod v0.7.0
+# golang.org/x/mod v0.8.0
 ## explicit; go 1.17
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
@@ -647,7 +647,7 @@ golang.org/x/mod/semver
 ## explicit
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.4.0
+# golang.org/x/sys v0.5.0
 ## explicit; go 1.17
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
@@ -662,7 +662,7 @@ golang.org/x/term
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# golang.org/x/tools v0.5.0
+# golang.org/x/tools v0.6.0
 ## explicit; go 1.18
 golang.org/x/tools/go/analysis
 golang.org/x/tools/go/analysis/passes/asmdecl
@@ -733,6 +733,7 @@ golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/packagesinternal
 golang.org/x/tools/internal/pkgbits
+golang.org/x/tools/internal/tokeninternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 # google.golang.org/protobuf v1.28.0
