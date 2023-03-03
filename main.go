@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 	"text/template"
 
@@ -101,6 +102,10 @@ func main() {
 	err = yaml.Unmarshal(metadataByte, &metadata)
 	Fatal(err)
 
+	if os.Getenv("CIRCLE_BRANCH") == "" {
+		log.Fatal("CIRCLE_BRANCH envvar must be set")
+	}
+
 	// Compare to last commit on current branch
 	gitDifferOptions := []gta.GitDifferOption{
 		gta.SetBaseBranch(os.Getenv("CIRCLE_BRANCH") + "~1"),
@@ -143,7 +148,13 @@ func main() {
 		}
 	}
 	if metadata.GoVersion == "" {
-		metadata.GoVersion = ""
+		cmd := "go mod edit -json | jq -r .Go"
+		out, err := exec.Command("bash", "-c", cmd).Output()
+		if err != nil {
+			Fatal(err)
+		}
+
+		metadata.GoVersion = string(out)
 	}
 
 	f, err := os.Create(".circleci/generated-config.yml")

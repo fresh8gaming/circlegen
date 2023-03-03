@@ -23,7 +23,7 @@ orbs:
 jobs:
   test-and-lint:
     docker:
-      - image: cimg/go:1.20
+      - image: cimg/go:{{ .GoVersion }}
     steps:
       - checkout
       {{- if not $.SkipInstallTools}}
@@ -34,7 +34,7 @@ jobs:
 
   buf-lint:
     docker:
-      - image: cimg/go:1.20
+      - image: cimg/go:{{ .GoVersion }}
     steps:
       - checkout
       - run: make install-tools
@@ -246,24 +246,24 @@ workflows:
   {{end}}
 {{- end}}
 
-{{ if $.NeedsApproval }}
-      - approve-production:
-          type: approval
-          filters:
-            branches:
-              only:
-                - trunk
-  {{- if .Staging }}
-      - approve-staging:
-          type: approval
-          filters:
-            branches:
-              only:
-                - trunk
-  {{ end }}
-{{ end }}
-
 {{if .ChangedServices}}
+  {{ if $.NeedsApproval }}
+        - approve-production:
+            type: approval
+            filters:
+              branches:
+                only:
+                  - trunk
+    {{- if .Staging }}
+        - approve-staging:
+            type: approval
+            filters:
+              branches:
+                only:
+                  - trunk
+    {{ end }}
+  {{ end }}
+
   {{- if .Staging }}
       - update-argo:
           name: update-staging-argo
