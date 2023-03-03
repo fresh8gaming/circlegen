@@ -359,7 +359,7 @@ workflows:
 
       - update-argo:
           name: update-argo-all-builds-staging
-          argo-cd-project: {{if .ArgoAppNamesProduction }}{{ .ArgoAppNamesProduction }}{{else}}{{.Name}}{{end}}
+          argo-cd-project: {{if .ArgoAppNamesStaging }}{{ .ArgoAppNamesStaging }}{{else}}{{.Name}}{{end}}
           context:
             - argo
           requires:
