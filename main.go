@@ -31,8 +31,6 @@ type Metadata struct {
 	Services               []MetadataService `yaml:"services"`
 	ArgoAppNamesProduction string            `yaml:"argoAppNamesProduction"`
 	ArgoAppNamesStaging    string            `yaml:"argoAppNamesStaging"`
-	SkipInstallTools       bool              `yaml:"skipInstallTools"`
-	SkipDockerLink         bool              `yaml:"skipDockerLint"`
 	Deploy                 Deploy            `yaml:"deploy"`
 	GoVersion              string            `yaml:"goVersion,omitempty"`
 	AlpineVersion          string            `yaml:"alpineVersion,omitempty"`
