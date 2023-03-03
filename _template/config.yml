@@ -240,19 +240,19 @@ workflows:
 
 {{if .ChangedServices}}
   {{ if $.NeedsApproval }}
-        - approve-production:
-            type: approval
-            filters:
-              branches:
-                only:
-                  - trunk
+      - approve-production:
+          type: approval
+          filters:
+            branches:
+              only:
+                - trunk
     {{- if .Staging }}
-        - approve-staging:
-            type: approval
-            filters:
-              branches:
-                only:
-                  - trunk
+      - approve-staging:
+          type: approval
+          filters:
+            branches:
+              only:
+                - trunk
     {{ end }}
   {{ end }}
 
