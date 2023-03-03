@@ -25,7 +25,6 @@ type Metadata struct {
 	Staging                bool              `yaml:"staging"`
 	Team                   string            `yaml:"team"`
 	Domain                 string            `yaml:"domain"`
-	WhitesourceEnabled     bool              `yaml:"whitesourceEnabled"`
 	KubescoreEnabled       bool              `yaml:"kubescoreEnabled"`
 	CDEnabled              bool              `yaml:"cdEnabled"`
 	Services               []MetadataService `yaml:"services"`
@@ -34,6 +33,8 @@ type Metadata struct {
 	Deploy                 Deploy            `yaml:"deploy"`
 	GoVersion              string            `yaml:"goVersion,omitempty"`
 	AlpineVersion          string            `yaml:"alpineVersion,omitempty"`
+
+	DisableWhitesource bool `yaml:"disableWhitesource"`
 
 	ChangedServices []MetadataService
 }

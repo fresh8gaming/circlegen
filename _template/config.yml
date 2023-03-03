@@ -183,7 +183,7 @@ jobs:
 
 workflows:
   version: 2
-{{- if .WhitesourceEnabled}}
+{{- if not .DisableWhitesource}}
   whitesource:
     jobs:
       - whitesource-scan/scan:
