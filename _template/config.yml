@@ -192,7 +192,7 @@ workflows:
           context:
             - whitesource
             - whitesource-{{ .Team }}
-            - go118
+            - go{{ .GoVersion }}
 {{- end}}
   main:
     jobs:
@@ -351,7 +351,7 @@ workflows:
 
       - update-argo:
           name: update-argo-all-builds-staging
-          argo-cd-project: {{if .ArgoAppNamesStaging }}{{ .ArgoAppNamesStaging }}{{else}}{{.Name}}{{end}}
+          argo-cd-project: {{if .ArgoAppNamesStaging }}{{ .ArgoAppNamesStaging }}{{else}}{{.Name}}-staging{{end}}
           context:
             - argo
           requires:
