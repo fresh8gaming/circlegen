@@ -33,6 +33,8 @@ type Metadata struct {
 	Deploy                 Deploy            `yaml:"deploy"`
 	GoVersion              string            `yaml:"goVersion,omitempty"`
 	AlpineVersion          string            `yaml:"alpineVersion,omitempty"`
+	TZDataVersion          string            `yaml:"tzDataVersion,omitempty"`
+	CaCertVersion          string            `yaml:"caCertVersion,omitempty"`
 
 	DisableWhitesource bool `yaml:"disableWhitesource"`
 
@@ -85,8 +87,28 @@ func (m Metadata) OverrideAlpineVersions() string {
 }
 
 //nolint:gocritic
+func (m Metadata) OverrideAlpinePackagesVersions() string {
+	const defaultTZ = "2023c-r0"
+	const defaultCaCert = "20220614-r4"
+	out := ""
+	if m.TZDataVersion == "" {
+		m.TZDataVersion = defaultTZ
+	}
+	if m.TZDataVersion != "" {
+		out = fmt.Sprintf(" --build-arg TZDATA_VERSION=%s", m.TZDataVersion)
+	}
+	if m.CaCertVersion == "" {
+		m.CaCertVersion = defaultCaCert
+	}
+	if m.CaCertVersion != "" {
+		out = fmt.Sprintf(" --build-arg CA_CERTIFICATE_VERSION=%s", m.CaCertVersion)
+	}
+	return out
+}
+
+//nolint:gocritic
 func (m Metadata) ArgOverrides() string {
-	return m.OverrideGoVersion() + m.OverrideAlpineVersions()
+	return m.OverrideGoVersion() + m.OverrideAlpineVersions() + m.OverrideAlpinePackagesVersions()
 }
 
 func (ms MetadataService) NameUnderscored() string {
