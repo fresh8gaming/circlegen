@@ -88,17 +88,9 @@ func (m Metadata) OverrideAlpineVersions() string {
 
 //nolint:gocritic
 func (m Metadata) OverrideAlpinePackagesVersions() string {
-	const defaultTZ = "2023c-r0"
-	const defaultCaCert = "20220614-r4"
 	out := ""
-	if m.TZDataVersion == "" {
-		m.TZDataVersion = defaultTZ
-	}
 	if m.TZDataVersion != "" {
 		out = fmt.Sprintf(" --build-arg TZDATA_VERSION=%s", m.TZDataVersion)
-	}
-	if m.CaCertVersion == "" {
-		m.CaCertVersion = defaultCaCert
 	}
 	if m.CaCertVersion != "" {
 		out = fmt.Sprintf(" --build-arg CA_CERTIFICATE_VERSION=%s", m.CaCertVersion)
