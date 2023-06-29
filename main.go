@@ -119,6 +119,18 @@ func main() {
 		log.Fatal("CIRCLE_BRANCH envvar must be set")
 	}
 
+	// Check for inconsistent vendoring
+	cmdString := "go list -m -f {{.Dir}}"
+	cmd := exec.Command("bash", "-c", cmdString)
+
+	var out strings.Builder
+	cmd.Stderr = &out
+
+	_, err = cmd.Output()
+	if _, ok := err.(*exec.ExitError); ok {
+		log.Fatal(out.String())
+	}
+
 	// Compare to last commit on current branch
 	gitDifferOptions := []gta.GitDifferOption{
 		gta.SetBaseBranch(os.Getenv("CIRCLE_BRANCH") + "~1"),
@@ -161,8 +173,8 @@ func main() {
 		}
 	}
 	if metadata.GoVersion == "" {
-		cmd := "go mod edit -json | jq -r .Go"
-		out, err := exec.Command("bash", "-c", cmd).Output()
+		cmdString := "go mod edit -json | jq -r .Go"
+		out, err := exec.Command("bash", "-c", cmdString).Output()
 		if err != nil {
 			Fatal(err)
 		}
