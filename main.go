@@ -107,6 +107,7 @@ func (ms MetadataService) NameUnderscored() string {
 	return strings.ReplaceAll(ms.Name, "-", "_")
 }
 
+//nolint:funlen
 func main() {
 	metadataByte, err := os.ReadFile(".metadata.yml")
 	Fatal(err)
