@@ -5,7 +5,7 @@ executors:
   gcp-default:
     description: A debian-based machine executor
     machine: # executor type
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.10.1
 
 orbs:
   gcp-gcr: fresh8gaming/google-artifact-orb@1.0.1
@@ -63,14 +63,14 @@ workflows:
 jobs:
   release:
     docker:
-      - image: cimg/go:1.20
+      - image: cimg/go:1.21
     steps:
       - checkout
       - run: curl -sL https://git.io/goreleaser | GORELEASER_CURRENT_TAG=${CIRCLE_TAG} bash
 
   install-tools:
     docker:
-      - image: cimg/go:1.20
+      - image: cimg/go:1.21
     steps:
       - checkout
       - run: make install-tools
@@ -81,7 +81,7 @@ jobs:
 
   test:
     docker:
-      - image: cimg/go:1.20
+      - image: cimg/go:1.21
     steps:
       - checkout
       - attach_workspace:
@@ -90,7 +90,7 @@ jobs:
 
   lint:
     docker:
-      - image: cimg/go:1.20
+      - image: cimg/go:1.21
     steps:
       - checkout
       - attach_workspace:

@@ -56,8 +56,9 @@ func setupFlags(name string) (*pflag.FlagSet, *options) {
 	flags.Usage = func() {
 		usage(os.Stdout, name, flags)
 	}
+
 	flags.StringVarP(&opts.format, "format", "f",
-		lookEnvWithDefault("GOTESTSUM_FORMAT", "short"),
+		lookEnvWithDefault("GOTESTSUM_FORMAT", "pkgname"),
 		"print format of test input")
 	flags.BoolVar(&opts.formatOptions.HideEmptyPackages, "format-hide-empty-pkg",
 		false, "do not print empty packages in compact formats")
@@ -71,7 +72,10 @@ func setupFlags(name string) (*pflag.FlagSet, *options) {
 	flags.StringVar(&opts.jsonFile, "jsonfile",
 		lookEnvWithDefault("GOTESTSUM_JSONFILE", ""),
 		"write all TestEvents to file")
-	flags.BoolVar(&opts.noColor, "no-color", defaultNoColor, "disable color output")
+	flags.StringVar(&opts.jsonFileTimingEvents, "jsonfile-timing-events",
+		lookEnvWithDefault("GOTESTSUM_JSONFILE_TIMING_EVENTS", ""),
+		"write only the pass, skip, and fail TestEvents to the file")
+	flags.BoolVar(&opts.noColor, "no-color", defaultNoColor(), "disable color output")
 
 	flags.Var(opts.hideSummary, "no-summary",
 		"do not print summary of: "+testjson.SummarizeAll.String())
@@ -136,6 +140,8 @@ Formats:
     pkgname                  print a line for each package
     pkgname-and-test-fails   print a line for each package and failed test output
     testname                 print a line for each test and package
+    testdox                  print a sentence for each test using gotestdox
+    github-actions           testname format with github actions log grouping
     standard-quiet           standard go test format
     standard-verbose         standard go test -v format
 
@@ -160,6 +166,7 @@ type options struct {
 	rawCommand                   bool
 	ignoreNonJSONOutputLines     bool
 	jsonFile                     string
+	jsonFileTimingEvents         string
 	junitFile                    string
 	postRunHookCmd               *commandValue
 	noColor                      bool
@@ -196,12 +203,36 @@ func (o options) Validate() error {
 	return nil
 }
 
-var defaultNoColor = func() bool {
-	if os.Getenv("GITHUB_ACTIONS") == "true" {
+func defaultNoColor() bool {
+	// fatih/color will only output color when stdout is a terminal which is not
+	// true for many CI environments which support color output. So instead, we
+	// try to detect these CI environments via their environment variables.
+	// This code is based on https://github.com/jwalton/go-supportscolor
+	if _, exists := os.LookupEnv("CI"); exists {
+		var ciEnvNames = []string{
+			"APPVEYOR",
+			"BUILDKITE",
+			"CIRCLECI",
+			"DRONE",
+			"GITEA_ACTIONS",
+			"GITHUB_ACTIONS",
+			"GITLAB_CI",
+			"TRAVIS",
+		}
+		for _, ciEnvName := range ciEnvNames {
+			if _, exists := os.LookupEnv(ciEnvName); exists {
+				return false
+			}
+		}
+		if os.Getenv("CI_NAME") == "codeship" {
+			return false
+		}
+	}
+	if _, exists := os.LookupEnv("TEAMCITY_VERSION"); exists {
 		return false
 	}
 	return color.NoColor
-}()
+}
 
 func setupLogging(opts *options) {
 	if opts.debug {
@@ -236,9 +267,11 @@ func run(opts *options) error {
 		IgnoreNonJSONOutputLines: opts.ignoreNonJSONOutputLines,
 	}
 	exec, err := testjson.ScanTestOutput(cfg)
+	handler.Flush()
 	if err != nil {
 		return finishRun(opts, exec, err)
 	}
+
 	exitErr := goTestProc.cmd.Wait()
 	if signum := atomic.LoadInt32(&goTestProc.signal); signum != 0 {
 		return finishRun(opts, exec, exitError{num: signalExitCode + int(signum)})
@@ -260,6 +293,7 @@ func run(opts *options) error {
 
 	cfg = testjson.ScanConfig{Execution: exec, Handler: handler}
 	exitErr = rerunFailed(ctx, opts, cfg)
+	handler.Flush()
 	if err := writeRerunFailsReport(opts, exec); err != nil {
 		return err
 	}

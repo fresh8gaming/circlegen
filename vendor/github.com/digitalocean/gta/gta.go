@@ -353,13 +353,29 @@ func (g *GTA) markedPackages() (map[string]map[string]bool, error) {
 			return nil, fmt.Errorf("pulling package information for %q, %v", abs, err)
 		}
 
-		// create a simple set of changed pkgs by import path
-		changed[pkg.ImportPath] = false
+		// create a simple set of changed pkgs by import path. The packages that are tracked have at least one of the following properties:
+		// * deleted (there's no need to check for this property here; it's already handled by this point)
+		// * changed Go files
+		// * tests are affected (e.g. files below a testdata directory)
+		// * changed embedded files
+		shouldMark := hasGoFile(dir.Files)
 		if _, ok := onlyTestsAffected[abs]; ok {
 			onlyTestPackagesChanged[pkg.ImportPath] = struct{}{}
+			shouldMark = true
+		}
+		if _, ok := onlyTestPackagesChanged[pkg.ImportPath]; ok {
+			shouldMark = true
+		}
+
+		if shouldMark {
+			changed[pkg.ImportPath] = false
 		}
 	}
 
+	// do not assume that only tests are affected if the package's embedded files
+	// were changed. We do not have enough information to know whether the
+	// embedded files are exclusively used by the tests, so assume that are used
+	// by more than the tests.
 	for k := range onlyTestPackagesChanged {
 		if _, ok := embeddedChanged[k]; ok {
 			delete(onlyTestPackagesChanged, k)

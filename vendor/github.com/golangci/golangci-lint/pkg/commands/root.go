@@ -24,7 +24,7 @@ const (
 
 func (e *Executor) persistentPreRun(_ *cobra.Command, _ []string) error {
 	if e.cfg.Run.PrintVersion {
-		_, _ = fmt.Fprintf(logutils.StdOut, "golangci-lint has version %s built from %s on %s\n", e.version, e.commit, e.date)
+		_ = printVersion(logutils.StdOut, e.buildInfo)
 		os.Exit(exitcodes.Success) // a return nil is not enough to stop the process because we are inside the `preRun`.
 	}
 
@@ -145,14 +145,14 @@ func (e *Executor) initRoot() {
 }
 
 func (e *Executor) needVersionOption() bool {
-	return e.date != ""
+	return e.buildInfo.Date != ""
 }
 
 func initRootFlagSet(fs *pflag.FlagSet, cfg *config.Config, needVersionOption bool) {
-	fs.BoolVarP(&cfg.Run.IsVerbose, "verbose", "v", false, wh("verbose output"))
+	fs.BoolVarP(&cfg.Run.IsVerbose, "verbose", "v", false, wh("Verbose output"))
 
 	var silent bool
-	fs.BoolVarP(&silent, "silent", "s", false, wh("disables congrats outputs"))
+	fs.BoolVarP(&silent, "silent", "s", false, wh("Disables congrats outputs"))
 	if err := fs.MarkHidden("silent"); err != nil {
 		panic(err)
 	}

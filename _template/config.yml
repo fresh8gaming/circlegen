@@ -4,7 +4,7 @@ executors:
   gcp-default:
     description: A debian-based machine executor
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.10.1
 
 references:
   workspace_root: &workspace_root /tmp/workspace
@@ -114,7 +114,7 @@ jobs:
 
   concat-versions:
     docker:
-      - image: cimg/base:2023.02
+      - image: cimg/base:2023.10
     steps:
       - *attach_workspace
       - run: cat /tmp/workspace/* | tr "\n" " " > /tmp/workspace/merged-versions
@@ -129,7 +129,7 @@ jobs:
       argo-cd-project:
         type: string
     docker:
-      - image: cimg/base:2023.02
+      - image: cimg/base:2023.10
     steps:
       - attach_workspace:
           at: /tmp/workspace
