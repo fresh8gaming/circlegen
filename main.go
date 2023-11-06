@@ -178,7 +178,10 @@ func main() {
 		if err != nil {
 			Fatal(err)
 		}
-
+		if string(out) == "1.21.3" {
+			metadata.GoVersion = "1.21"
+			return
+		}
 		metadata.GoVersion = string(out)
 	}
 
