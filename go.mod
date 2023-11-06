@@ -1,6 +1,6 @@
 module github.com/fresh8gaming/circlegen
 
-go 1.21
+go 1.21.3
 
 require (
 	github.com/digitalocean/gta v0.0.0-20230907222444-5e086fe157dc
