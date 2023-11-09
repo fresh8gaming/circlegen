@@ -5,6 +5,6 @@ package tools
 
 import (
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
-	_ "github.com/tetratelabs/wazero"
+	_ "github.com/kynrai/tainted"
 	_ "gotest.tools/gotestsum"
 )
