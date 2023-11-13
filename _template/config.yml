@@ -6,6 +6,11 @@ executors:
     machine:
       image: ubuntu-2204:2023.10.1
 
+  java:
+    description: The docker container to run java commands
+    docker:
+      - image: whitesourcesoftware/ua-base:v2
+
 references:
   workspace_root: &workspace_root /tmp/workspace
 
@@ -181,12 +186,60 @@ jobs:
           name: Scan charts
           command: "cat ./deploy/chart/values-production/*.yaml > ./values-production.yaml && helm template -n {{ .Name }} {{ .Name }} --values ./deploy/chart/values.yaml --values ./values-production.yaml ./deploy/chart |./kube-score score --ignore-test container-image-tag --ignore-test horizontalpodautoscaler-has-target - || true"
 
+  scan:
+    executor: java
+    parameters:
+      api_key:
+        description: Unique identifier of the organization. Can be retrieved from the admin page in your WhiteSource account.
+        type: string
+        default: "${API_KEY}"
+      directory:
+        description: Comma separated list of directories and / or files to scan.
+        type: string
+        default: "."
+      config_file_path:
+        description: Configuration file name (including file path).
+        type: string
+        default: "whitesource-fs-agent.config"
+      commands_file_path:
+        description: install commands file (including file path) 
+        type: string
+        default: "install_commands.sh"
+    steps:
+      - checkout
+      - run:
+          command: |
+            export WS_PROJECTTAG=gitUrl:$CIRCLE_REPOSITORY_URL
+            if [[ -z "<< parameters.api_key >>" ]]; then
+              echo "API_KEY has not been set, please set it up in the project environment variables since its mandatory"
+              exit 1
+            else
+                if [[ -f << parameters.commands_file_path >> ]]
+                then
+                    echo "Executing file: install_commands.sh"
+                    echo ""
+                    chmod +x << parameters.commands_file_path >>
+                    ./<< parameters.commands_file_path >>
+                fi
+                  bash <(curl -s -L https://raw.githubusercontent.com/whitesource/unified-agent-distribution/master/standAlone/wss_agent_orb.sh) -apiKey << parameters.api_key >> -c << parameters.config_file_path >> -d << parameters.directory >>
+            fi
+
 workflows:
   version: 2
 {{- if not .DisableWhitesource}}
   whitesource:
     jobs:
       - whitesource-scan/scan:
+          config_file_path: .circleci/.whitesource
+          commands_file_path: .circleci/.whitesource_setup.sh
+          context:
+            - whitesource
+            - whitesource-{{ .Team }}
+            - go{{ .GoVersion }}
+
+  whitesource2:
+    jobs:
+      - scan:
           config_file_path: .circleci/.whitesource
           commands_file_path: .circleci/.whitesource_setup.sh
           context:
