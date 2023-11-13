@@ -22,7 +22,6 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.14.1
   slack: circleci/slack@3.4.2
   docker: circleci/docker@2.0.3
-  whitesource-scan: whitesource/whitesource-scan@21.6.3
   compare-url: iynere/compare-url@1.2.0
 
 jobs:
@@ -209,7 +208,7 @@ jobs:
       - checkout
       - run:
           command: |
-            export WS_PROJECTTAG=gitUrl:$CIRCLE_REPOSITORY_URL
+            export WS_PROJECTTAG=github:$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
             if [[ -z "<< parameters.api_key >>" ]]; then
               echo "API_KEY has not been set, please set it up in the project environment variables since its mandatory"
               exit 1
@@ -228,16 +227,6 @@ workflows:
   version: 2
 {{- if not .DisableWhitesource}}
   whitesource:
-    jobs:
-      - whitesource-scan/scan:
-          config_file_path: .circleci/.whitesource
-          commands_file_path: .circleci/.whitesource_setup.sh
-          context:
-            - whitesource
-            - whitesource-{{ .Team }}
-            - go{{ .GoVersion }}
-
-  whitesource2:
     jobs:
       - scan:
           config_file_path: .circleci/.whitesource
