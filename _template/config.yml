@@ -208,7 +208,7 @@ jobs:
       - checkout
       - run:
           command: |
-            export WS_PROJECTTAG=github:$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+            export WS_SCANCOMMENT="Repository: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
             if [[ -z "<< parameters.api_key >>" ]]; then
               echo "API_KEY has not been set, please set it up in the project environment variables since its mandatory"
               exit 1
