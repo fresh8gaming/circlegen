@@ -340,6 +340,8 @@ workflows:
                 - trunk
 {{ end }}
 
+  all-builds:
+    jobs:
 {{range .Services -}}
   {{if .CIEnabled}}
       - build-and-push-image:
