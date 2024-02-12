@@ -236,6 +236,8 @@ workflows:
             - whitesource-{{ .Team }}
             - go{{ .GoVersion }}
 {{- end}}
+
+{{if .ChangedServices -}}
   main:
     jobs:
       - test-and-lint
@@ -248,18 +250,6 @@ workflows:
       - docker/hadolint:
           dockerfiles: "build/Dockerfile"
           hadolint-tag: 2.12.0-debian
-      - approve-trigger-all-builds:
-          type: approval
-          filters:
-            branches:
-              only:
-                - trunk
-          requires:
-            - test-and-lint
-            - docker/hadolint
-{{if $.HasGRPC}}
-            - buf-lint
-{{- end}}
 {{range .ChangedServices -}}
   {{if .CIEnabled}}
       - build-and-push-image:
@@ -278,6 +268,7 @@ workflows:
             - buf-lint
     {{- end}}
   {{end}}
+{{- end}}
 {{- end}}
 
 {{if .ChangedServices}}
@@ -342,6 +333,30 @@ workflows:
 
   all-builds:
     jobs:
+      - approve-trigger-all-builds:
+          type: approval
+          filters:
+            branches:
+              only:
+                - trunk
+      - test-and-lint:
+          requires:
+            - approve-trigger-all-builds
+{{if $.HasGRPC}}
+      - buf-lint:
+          requires:
+            - approve-trigger-all-builds
+{{- end}}
+{{if $.KubescoreEnabled}}
+      - kube-score:
+          requires:
+            - approve-trigger-all-builds
+{{- end}}
+      - docker/hadolint:
+          dockerfiles: "build/Dockerfile"
+          hadolint-tag: 2.12.0-debian
+          requires:
+            - approve-trigger-all-builds
 {{range .Services -}}
   {{if .CIEnabled}}
       - build-and-push-image:
@@ -354,7 +369,11 @@ workflows:
           context:
             - artifact-registry
           requires:
-            - approve-trigger-all-builds
+            - test-and-lint
+            - docker/hadolint
+    {{if $.HasGRPC}}
+            - buf-lint
+    {{- end}}
   {{end}}
 {{- end}}
       - concat-versions:
