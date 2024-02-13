@@ -226,7 +226,7 @@ jobs:
 workflows:
   version: 2
 {{- if not .DisableWhitesource}}
-  whitesource:
+  mend:
     jobs:
       - scan:
           config_file_path: .circleci/.whitesource
@@ -237,7 +237,7 @@ workflows:
             - go{{ .GoVersion }}
 {{- end}}
 {{ if .ChangedServices }}
-  main:
+  deploy-changed:
     jobs:
       - test-and-lint
 {{if $.HasGRPC}}
@@ -330,7 +330,7 @@ workflows:
                 - trunk
 {{ end }}
 
-  all-builds:
+  deploy-all:
     jobs:
       - approve-trigger-all-builds:
           type: approval
