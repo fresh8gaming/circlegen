@@ -226,7 +226,7 @@ jobs:
 workflows:
   version: 2
 {{- if not .DisableWhitesource}}
-  whitesource:
+  mend:
     jobs:
       - scan:
           config_file_path: .circleci/.whitesource
@@ -236,7 +236,8 @@ workflows:
             - whitesource-{{ .Team }}
             - go{{ .GoVersion }}
 {{- end}}
-  main:
+{{ if .ChangedServices }}
+  deploy-changed:
     jobs:
       - test-and-lint
 {{if $.HasGRPC}}
@@ -248,18 +249,6 @@ workflows:
       - docker/hadolint:
           dockerfiles: "build/Dockerfile"
           hadolint-tag: 2.12.0-debian
-      - approve-trigger-all-builds:
-          type: approval
-          filters:
-            branches:
-              only:
-                - trunk
-          requires:
-            - test-and-lint
-            - docker/hadolint
-{{if $.HasGRPC}}
-            - buf-lint
-{{- end}}
 {{range .ChangedServices -}}
   {{if .CIEnabled}}
       - build-and-push-image:
@@ -278,6 +267,7 @@ workflows:
             - buf-lint
     {{- end}}
   {{end}}
+{{- end}}
 {{- end}}
 
 {{if .ChangedServices}}
@@ -340,6 +330,32 @@ workflows:
                 - trunk
 {{ end }}
 
+  deploy-all:
+    jobs:
+      - approve-trigger-all-builds:
+          type: approval
+          filters:
+            branches:
+              only:
+                - trunk
+      - test-and-lint:
+          requires:
+            - approve-trigger-all-builds
+{{if $.HasGRPC}}
+      - buf-lint:
+          requires:
+            - approve-trigger-all-builds
+{{- end}}
+{{if $.KubescoreEnabled}}
+      - kube-score:
+          requires:
+            - approve-trigger-all-builds
+{{- end}}
+      - docker/hadolint:
+          dockerfiles: "build/Dockerfile"
+          hadolint-tag: 2.12.0-debian
+          requires:
+            - approve-trigger-all-builds
 {{range .Services -}}
   {{if .CIEnabled}}
       - build-and-push-image:
@@ -352,7 +368,11 @@ workflows:
           context:
             - artifact-registry
           requires:
-            - approve-trigger-all-builds
+            - test-and-lint
+            - docker/hadolint
+    {{if $.HasGRPC}}
+            - buf-lint
+    {{- end}}
   {{end}}
 {{- end}}
       - concat-versions:
