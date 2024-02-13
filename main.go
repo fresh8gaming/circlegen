@@ -100,7 +100,7 @@ func (m Metadata) OverrideAlpinePackagesVersions() string {
 
 //nolint:gocritic
 func (m Metadata) ArgOverrides() string {
-	return m.OverrideGoVersion() + m.OverrideAlpineVersions() + m.OverrideAlpinePackagesVersions()
+	return strings.TrimSpace(m.OverrideGoVersion() + m.OverrideAlpineVersions() + m.OverrideAlpinePackagesVersions())
 }
 
 func (ms MetadataService) NameUnderscored() string {
@@ -173,6 +173,7 @@ func main() {
 			}
 		}
 	}
+
 	if metadata.GoVersion == "" {
 		cmdString := "go mod edit -json | jq -r .Go"
 		out, err := exec.Command("bash", "-c", cmdString).Output()

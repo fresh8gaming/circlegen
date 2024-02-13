@@ -5,7 +5,6 @@ go 1.21.3
 require (
 	github.com/digitalocean/gta v0.0.0-20230907222444-5e086fe157dc
 	github.com/golangci/golangci-lint v1.55.2
-	github.com/kynrai/tainted v0.0.0-20210115163559-cd6dd8f4ead5
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/gotestsum v1.11.0
 )
