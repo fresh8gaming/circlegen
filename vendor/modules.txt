@@ -360,9 +360,6 @@ github.com/kulti/thelper/pkg/analyzer
 # github.com/kunwardeep/paralleltest v1.0.8
 ## explicit; go 1.17
 github.com/kunwardeep/paralleltest/pkg/paralleltest
-# github.com/kynrai/tainted v0.0.0-20210115163559-cd6dd8f4ead5
-## explicit
-github.com/kynrai/tainted
 # github.com/kyoh86/exportloopref v0.1.11
 ## explicit; go 1.18
 github.com/kyoh86/exportloopref
