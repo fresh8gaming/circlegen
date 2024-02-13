@@ -236,8 +236,7 @@ workflows:
             - whitesource-{{ .Team }}
             - go{{ .GoVersion }}
 {{- end}}
-
-{{if .ChangedServices -}}
+{{ if .ChangedServices }}
   main:
     jobs:
       - test-and-lint
