@@ -1,11 +1,6 @@
 version: 2.1
 
 executors:
-  gcp-default:
-    description: A debian-based machine executor
-    machine:
-      image: ubuntu-2204:2023.10.1
-
   java:
     description: The docker container to run java commands
     docker:
@@ -19,10 +14,8 @@ references:
       at: *workspace_root
 
 orbs:
-  gcp-gcr: circleci/gcp-gcr@0.14.1
-  slack: circleci/slack@3.4.2
-  docker: circleci/docker@2.0.3
-  compare-url: iynere/compare-url@1.2.0
+  gcp-gcr: circleci/gcp-gcr@0.16.1
+  docker: circleci/docker@2.5
 
 jobs:
   test-and-lint:
