@@ -204,6 +204,8 @@ func main() {
 
 	_, err = f.Write(byteBuf.Bytes())
 	Fatal(err)
+
+	fmt.Println(byteBuf.Bytes())
 }
 
 func Fatal(err error) {
