@@ -36,6 +36,7 @@ jobs:
       - run: make buf-lint
 
   build-and-push-image:
+    executor: gcp-gcr/default
     parameters:
       extra_build_args:
         default: ""
