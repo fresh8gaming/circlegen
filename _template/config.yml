@@ -250,7 +250,7 @@ workflows:
           image: {{ $.Name }}-{{ .Name }}
           service_name: {{ .NameUnderscored }}
           tag: ${CIRCLE_SHA1}
-          extra_build_args: "--build-arg APP="{{ .Name }}" {{ $.ArgOverrides }}"
+          extra_build_args: --build-arg APP="{{ .Name }}" {{ $.ArgOverrides }}
           context:
             - artifact-registry
           requires:
@@ -357,7 +357,7 @@ workflows:
           service_name: {{ .NameUnderscored }}
           dockerfile-name: {{ .Dockerfile }}
           tag: ${CIRCLE_SHA1}
-          extra_build_args: "--build-arg APP="{{ .Name }}" {{ $.ArgOverrides }}"
+          extra_build_args: --build-arg APP="{{ .Name }}" {{ $.ArgOverrides }}
           context:
             - artifact-registry
           requires:
