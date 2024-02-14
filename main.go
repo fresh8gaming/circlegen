@@ -72,7 +72,7 @@ func (m Metadata) NeedsApproval() bool {
 func (m Metadata) OverrideGoVersion() string {
 	out := ""
 	if m.GoVersion != "" {
-		out = fmt.Sprintf(" --build-arg=\"GO_VERSION=%s\"", m.GoVersion)
+		out = fmt.Sprintf(" --build-arg=\"GO_VERSION=%s\"", strings.TrimSpace(m.GoVersion))
 	}
 	return out
 }
@@ -81,7 +81,7 @@ func (m Metadata) OverrideGoVersion() string {
 func (m Metadata) OverrideAlpineVersions() string {
 	out := ""
 	if m.AlpineVersion != "" {
-		out = fmt.Sprintf(" --build-arg=\"ALPINE_VERSION=%s\"", m.AlpineVersion)
+		out = fmt.Sprintf(" --build-arg=\"ALPINE_VERSION=%s\"", strings.TrimSpace(m.AlpineVersion))
 	}
 	return out
 }
@@ -90,10 +90,10 @@ func (m Metadata) OverrideAlpineVersions() string {
 func (m Metadata) OverrideAlpinePackagesVersions() string {
 	out := ""
 	if m.TZDataVersion != "" {
-		out = fmt.Sprintf(" --build-arg=\"TZDATA_VERSION=%s\"", m.TZDataVersion)
+		out = fmt.Sprintf(" --build-arg=\"TZDATA_VERSION=%s\"", strings.TrimSpace(m.TZDataVersion))
 	}
 	if m.CaCertVersion != "" {
-		out = fmt.Sprintf(" --build-arg=\"CA_CERTIFICATE_VERSION=%s\"", m.CaCertVersion)
+		out = fmt.Sprintf(" --build-arg=\"CA_CERTIFICATE_VERSION=%s\"", strings.TrimSpace(m.CaCertVersion))
 	}
 	return out
 }
